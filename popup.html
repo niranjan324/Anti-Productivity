@@ -7,55 +7,65 @@
   <link rel="stylesheet" href="popup.css">
 </head>
 <body id="app-body">
-  <div class="container">
-    <!-- Header -->
+  <div class="container" id="main-container">
+    <!-- Top Bar: Branding & Streak Counter -->
     <header class="header">
-      <div class="logo-badge">
-        <span class="pulse-dot"></span>
-        <h1 class="title">TAB EXECUTIONER</h1>
+      <div class="brand">
+        <span class="status-dot" id="status-dot"></span>
+        <h1 class="brand-title">TAB EXECUTIONER</h1>
       </div>
-      <div class="streak-badge">
-        <span class="streak-label">STREAK</span>
-        <span class="streak-value" id="streak-display">0</span>
+      <div class="streak-pill" id="streak-badge" title="Continuous correct equations">
+        <span class="streak-icon">🔥</span>
+        <span class="streak-text">STREAK</span>
+        <span class="streak-count" id="streak-display">0</span>
       </div>
     </header>
 
-    <!-- Main Game Card -->
-    <main class="main-card">
-      <!-- Countdown Timer -->
-      <div class="timer-section">
-        <div class="section-label">TIME REMAINING</div>
+    <!-- Pitch / Mode Bar -->
+    <div class="mode-bar">
+      <span class="target-tag" id="target-indicator">TARGET: ALL ACTIVE TABS</span>
+      <button type="button" class="mode-toggle-btn" id="mode-toggle-btn" title="Toggle Demo / Strict Mode">
+        <span id="mode-label">DEMO MODE</span> ⚙️
+      </button>
+    </div>
+
+    <!-- Main Stage Card -->
+    <main class="stage-card" id="stage-card">
+      <!-- High-Visibility Timer Section -->
+      <section class="timer-section">
+        <span class="hud-label">TIME REMAINING</span>
         <div class="timer-display" id="timer-display">20s</div>
-      </div>
+      </section>
 
-      <!-- Arithmetic Problem Display -->
-      <div class="equation-section">
-        <div class="section-label">SOLVE TO SURVIVE</div>
+      <!-- Oversized Math Display -->
+      <section class="equation-section">
+        <span class="hud-label">SOLVE TO KEEP TAB ALIVE</span>
         <div class="equation-display" id="problem-display">--</div>
-      </div>
+      </section>
 
-      <!-- Input Controls -->
-      <div class="input-form">
-        <div class="input-group">
+      <!-- Input Form -->
+      <form class="input-form" id="answer-form">
+        <div class="input-wrapper" id="input-wrapper">
           <input 
             type="number" 
             id="answer-input" 
             class="answer-input" 
-            placeholder="Answer..." 
+            placeholder="Type answer..." 
             autocomplete="off" 
             autofocus 
+            required
           />
-          <button type="button" id="submit-btn" class="submit-btn">SUBMIT</button>
+          <button type="submit" id="submit-btn" class="submit-btn">SUBMIT</button>
         </div>
-      </div>
+      </form>
 
-      <!-- Status & Target Feedback Banner -->
-      <div class="status-message" id="status-message" aria-live="polite"></div>
+      <!-- Status & Target Alert Notice -->
+      <div class="status-message" id="status-message" aria-live="polite">Ready to solve!</div>
     </main>
 
-    <!-- Footer -->
+    <!-- Footer Rules -->
     <footer class="footer">
-      <div class="penalty-hint">⚠️ Wrong Answer = -5s Penalty | 0s = Tab Execution</div>
+      <span class="footer-hint">⚠️ Wrong Answer = -5s Penalty | 0s = Immediate Tab Close</span>
     </footer>
   </div>
 

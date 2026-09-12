@@ -1,29 +1,22 @@
 /**
- * Anti-Procrastination Tab Executioner (v2.0.0)
- * Milestone 3: Tab Targeting & Termination Logic
- * 
- * Features:
- * - Finite State Machine (IDLE, ACTIVE, PENALTY, FAILED)
- * - Dynamic Arithmetic Problem Engine
- * - Zero-Dependency Web Audio 880Hz Sawtooth Alarm Synthesizer
- * - Chrome Tabs API Active Tab Querying & Execution Sequence
- * - System Protocol URL Safeguards & Domain Filter Enforcement
+ * Anti-Procrastination Tab Executioner (v3.0.0)
+ * Milestone 4: UI Polish, Micro-Interactions & Live Pitch Prep
  */
 
 // =============================================================================
-// 1. Configuration & Targeting Mode Settings
+// 1. Game Configuration & Targets
 // =============================================================================
 const CONFIG = Object.freeze({
   BASE_TIME_SECONDS: 20,
   PENALTY_SECONDS: 5,
   COUNTDOWN_INTERVAL_MS: 1000,
-  SHAKE_DURATION_MS: 300,
+  SHAKE_DURATION_MS: 350,
   BUZZER_DURATION_MS: 400,
   EXECUTION_DELAY_MS: 300,
   OPERATORS: ['+', '-', '×']
 });
 
-// Distracting domains list (checked when ENFORCE_ALL_TABS is false)
+// Distracting domains for Strict Mode
 const TARGET_DOMAINS = [
   'youtube.com',
   'reddit.com',
@@ -34,11 +27,11 @@ const TARGET_DOMAINS = [
   'netflix.com'
 ];
 
-// Toggle true to terminate any non-system tab, or false to only terminate TARGET_DOMAINS
-const ENFORCE_ALL_TABS = true;
+// Mode state: true = Demo Mode (All non-system tabs), false = Strict Mode (Distractions only)
+let isDemoMode = true;
 
 // =============================================================================
-// 2. Finite State Machine (FSM) States
+// 2. Finite State Machine (FSM)
 // =============================================================================
 const GameStates = Object.freeze({
   IDLE: 'IDLE',
@@ -48,7 +41,7 @@ const GameStates = Object.freeze({
 });
 
 // =============================================================================
-// 3. State Container
+// 3. State Variables
 // =============================================================================
 let currentState = GameStates.IDLE;
 let timeLeft = CONFIG.BASE_TIME_SECONDS;
@@ -63,7 +56,7 @@ let currentProblem = {
 };
 
 // =============================================================================
-// 4. DOM Element References
+// 4. DOM Cache
 // =============================================================================
 let dom = {};
 
@@ -75,7 +68,13 @@ function initDOMReferences() {
     answerInput: document.getElementById('answer-input'),
     submitBtn: document.getElementById('submit-btn'),
     streakDisplay: document.getElementById('streak-display'),
-    statusMessage: document.getElementById('status-message')
+    streakBadge: document.getElementById('streak-badge'),
+    statusMessage: document.getElementById('status-message'),
+    targetIndicator: document.getElementById('target-indicator'),
+    modeToggleBtn: document.getElementById('mode-toggle-btn'),
+    modeLabel: document.getElementById('mode-label'),
+    inputWrapper: document.getElementById('input-wrapper'),
+    answerForm: document.getElementById('answer-form')
   };
 }
 
@@ -83,11 +82,6 @@ function initDOMReferences() {
 // 5. Zero-Dependency Web Audio Synthesizer
 // =============================================================================
 
-/**
- * Initializes and returns a Web Audio Context.
- * Resumes audio context if paused by Chrome autoplay policies.
- * @returns {AudioContext}
- */
 function getAudioContext() {
   if (!audioCtx) {
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -100,9 +94,7 @@ function getAudioContext() {
 }
 
 /**
- * Synthesizes an 880Hz alert buzzer tone using native Web Audio API.
- * Uses a sawtooth waveform and a GainNode at 0.2 volume to prevent speaker clipping.
- * Plays for exactly 400ms without requiring external audio files.
+ * 880Hz alert buzzer tone (Sawtooth waveform + Gain envelope)
  */
 function playBuzzerSound() {
   try {
@@ -110,25 +102,48 @@ function playBuzzerSound() {
     const now = ctx.currentTime;
     const durationSec = CONFIG.BUZZER_DURATION_MS / 1000;
 
-    // 1. Create Oscillator (Sound Generator)
     const osc = ctx.createOscillator();
     osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(880, now); // 880Hz shrill A5 tone
+    osc.frequency.setValueAtTime(880, now);
 
-    // 2. Create GainNode (Volume Control)
     const gainNode = ctx.createGain();
-    gainNode.gain.setValueAtTime(0.2, now); // 0.2 gain to prevent clipping
+    gainNode.gain.setValueAtTime(0.2, now);
     gainNode.gain.exponentialRampToValueAtTime(0.001, now + durationSec);
 
-    // 3. Connect Graph: Oscillator -> Gain -> Hardware Output
     osc.connect(gainNode);
     gainNode.connect(ctx.destination);
 
-    // 4. Execute 400ms synthesis window
     osc.start(now);
     osc.stop(now + durationSec);
   } catch (err) {
-    console.error('Web Audio buzzer error:', err);
+    console.error('Audio synthesizer error:', err);
+  }
+}
+
+/**
+ * Positive chime on streak milestone or correct input
+ */
+function playSuccessChime() {
+  try {
+    const ctx = getAudioContext();
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(587.33, now); // D5
+    osc.frequency.exponentialRampToValueAtTime(880, now + 0.12); // A5
+
+    gainNode.gain.setValueAtTime(0.15, now);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+
+    osc.connect(gainNode);
+    gainNode.connect(ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.15);
+  } catch (err) {
+    // Non-fatal
   }
 }
 
@@ -140,9 +155,6 @@ function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-/**
- * Generates bounded arithmetic problems for rapid mental calculation.
- */
 function generateMathProblem() {
   let a = getRandomInt(3, 25);
   let b = getRandomInt(2, 12);
@@ -155,7 +167,6 @@ function generateMathProblem() {
       break;
 
     case '-':
-      // Guarantee A >= B to prevent negative numbers
       if (a < b) {
         [a, b] = [b, a];
       }
@@ -163,7 +174,6 @@ function generateMathProblem() {
       break;
 
     case '×':
-      // Bound multiplication operands for fast mental math
       a = getRandomInt(2, 12);
       b = getRandomInt(2, 12);
       solution = a * b;
@@ -180,37 +190,34 @@ function renderProblem() {
 }
 
 // =============================================================================
-// 7. Visual UI State Synchronization
+// 7. Dynamic Stress-Level Visual System
 // =============================================================================
 
 function syncUI() {
   if (!dom.timerDisplay || !dom.body) return;
 
-  // 1. Update Timer Text
+  // 1. Oversized Countdown Display
   dom.timerDisplay.textContent = `${Math.max(0, timeLeft)}s`;
 
-  // 2. Update Streak
+  // 2. Streak Badge
   if (dom.streakDisplay) {
     dom.streakDisplay.textContent = String(streakCounter);
   }
 
-  // 3. Update Visual Stress Classes
+  // 3. Stress State Classes
   dom.body.classList.remove('state-warning', 'state-panic', 'state-failed');
 
   if (currentState === GameStates.FAILED || timeLeft <= 0) {
     dom.body.classList.add('state-failed');
   } else if (timeLeft <= 5) {
+    // Panic State: <= 5 seconds (Crimson flash & micro-vibration)
     dom.body.classList.add('state-panic');
   } else if (timeLeft <= 10) {
+    // Warning State: 6s - 10s (Amber pulse)
     dom.body.classList.add('state-warning');
   }
 }
 
-/**
- * Displays status feedback messages in the popup.
- * @param {string} message 
- * @param {'info' | 'warn' | 'error' | 'alert'} type 
- */
 function setStatus(message, type = 'info') {
   if (!dom.statusMessage) return;
   dom.statusMessage.textContent = message;
@@ -218,7 +225,36 @@ function setStatus(message, type = 'info') {
 }
 
 // =============================================================================
-// 8. Timer Cadence & Game Loop
+// 8. Demo / Targeting Mode Toggle
+// =============================================================================
+
+function toggleTargetMode() {
+  isDemoMode = !isDemoMode;
+  updateModeDisplay();
+}
+
+function updateModeDisplay() {
+  if (isDemoMode) {
+    if (dom.modeLabel) dom.modeLabel.textContent = 'DEMO MODE';
+    if (dom.targetIndicator) {
+      dom.targetIndicator.textContent = 'TARGET: ALL ACTIVE TABS';
+      dom.targetIndicator.style.color = '#38bdf8';
+      dom.targetIndicator.style.borderColor = 'rgba(56, 189, 248, 0.3)';
+      dom.targetIndicator.style.background = 'rgba(56, 189, 248, 0.12)';
+    }
+  } else {
+    if (dom.modeLabel) dom.modeLabel.textContent = 'STRICT MODE';
+    if (dom.targetIndicator) {
+      dom.targetIndicator.textContent = 'TARGET: SOCIAL MEDIA ONLY';
+      dom.targetIndicator.style.color = '#a78bfa';
+      dom.targetIndicator.style.borderColor = 'rgba(167, 139, 250, 0.3)';
+      dom.targetIndicator.style.background = 'rgba(167, 139, 250, 0.12)';
+    }
+  }
+}
+
+// =============================================================================
+// 9. Timer Cadence & Game Loop
 // =============================================================================
 
 function startTimerLoop() {
@@ -250,7 +286,7 @@ function stopTimerLoop() {
 }
 
 // =============================================================================
-// 9. State Machine Transitions
+// 10. State Machine Transitions & Micro-Interactions
 // =============================================================================
 
 function transitionTo(nextState) {
@@ -271,12 +307,11 @@ function transitionTo(nextState) {
       break;
 
     case GameStates.PENALTY:
-      // Instantly deduct penalty seconds
       timeLeft = Math.max(0, timeLeft - CONFIG.PENALTY_SECONDS);
       setStatus(`✗ Incorrect! -${CONFIG.PENALTY_SECONDS}s Penalty`, 'error');
 
-      // 300ms CSS Shake
-      triggerInputShake();
+      // Trigger 350ms CSS shake on input container
+      triggerTypoPenaltyShake();
 
       if (timeLeft <= 0) {
         timeLeft = 0;
@@ -289,7 +324,6 @@ function transitionTo(nextState) {
       break;
 
     case GameStates.FAILED:
-      // Halt game loop immediately
       stopTimerLoop();
       syncUI();
       onTimerExpired();
@@ -297,40 +331,46 @@ function transitionTo(nextState) {
   }
 }
 
-function triggerInputShake() {
-  if (!dom.answerInput) return;
+/**
+ * 350ms smooth CSS horizontal shake on input with red highlight
+ */
+function triggerTypoPenaltyShake() {
+  const targetEl = dom.inputWrapper || dom.answerInput;
+  if (!targetEl) return;
 
-  dom.answerInput.classList.remove('shake');
-  void dom.answerInput.offsetWidth; // Force reflow
-  dom.answerInput.classList.add('shake');
+  targetEl.classList.remove('shake');
+  void targetEl.offsetWidth; // Force reflow
+  targetEl.classList.add('shake');
 
   setTimeout(() => {
-    if (dom.answerInput) {
-      dom.answerInput.classList.remove('shake');
-    }
+    targetEl.classList.remove('shake');
   }, CONFIG.SHAKE_DURATION_MS);
 }
 
+/**
+ * Green flash & scale-up animation on streak pill
+ */
+function triggerStreakPop() {
+  if (!dom.streakBadge) return;
+  dom.streakBadge.classList.remove('streak-pop');
+  void dom.streakBadge.offsetWidth;
+  dom.streakBadge.classList.add('streak-pop');
+
+  setTimeout(() => {
+    if (dom.streakBadge) dom.streakBadge.classList.remove('streak-pop');
+  }, 250);
+}
+
 // =============================================================================
-// 10. Tab Targeting & Termination Engine (Milestone 3)
+// 11. Tab Termination & Safety Guards
 // =============================================================================
 
-/**
- * Checks if a given URL belongs to protected internal browser schemes.
- * @param {string} url 
- * @returns {boolean}
- */
 function isProtectedUrl(url) {
   if (!url) return true;
   const protectedProtocols = ['chrome://', 'chrome-extension://', 'edge://', 'about:'];
   return protectedProtocols.some((protocol) => url.startsWith(protocol));
 }
 
-/**
- * Checks if a given URL matches any configured target distracting domains.
- * @param {string} url 
- * @returns {boolean}
- */
 function isTargetDistraction(url) {
   if (!url) return false;
   try {
@@ -342,38 +382,22 @@ function isTargetDistraction(url) {
   }
 }
 
-/**
- * Executes the failure sequence when countdown expires.
- * Choreography:
- * 1. Clear countdown interval immediately.
- * 2. Trigger 880Hz alert buzzer sound.
- * 3. Update UI to alert state.
- * 4. Delay tab removal by 300ms so visual/audio alert registers.
- * 5. Handle protected tabs and domain filter safeguards.
- */
 function onTimerExpired() {
-  // Step 1: Halt interval
   stopTimerLoop();
-
-  // Step 2: Trigger Synthesized 880Hz Buzzer
   playBuzzerSound();
 
-  // Disable UI inputs
   if (dom.answerInput) dom.answerInput.disabled = true;
   if (dom.submitBtn) dom.submitBtn.disabled = true;
   if (dom.problemDisplay) dom.problemDisplay.textContent = 'TAB EXECUTED';
 
-  // Step 3: Update UI text with alert styling
   setStatus('🚨 TERMINATING ACTIVE TAB...', 'alert');
 
-  // Query active tab in the current window using Chrome Manifest V3 Tabs API
   if (typeof chrome === 'undefined' || !chrome.tabs) {
-    setStatus('⚠️ Chrome Tabs API unavailable in current environment.', 'warn');
+    setStatus('⚠️ Chrome Tabs API unavailable in test environment.', 'warn');
     return;
   }
 
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    // Handle cases where tabs array is empty or inaccessible
     if (!tabs || tabs.length === 0 || !tabs[0]) {
       setStatus('⚠️ No active tab detected to terminate.', 'warn');
       return;
@@ -387,16 +411,15 @@ function onTimerExpired() {
       return;
     }
 
-    // Safeguard 2: Targeting Mode Configuration Check
-    if (!ENFORCE_ALL_TABS && !isTargetDistraction(activeTab.url)) {
+    // Safeguard 2: Targeting Mode (Demo Mode closes all, Strict Mode closes distractions)
+    if (!isDemoMode && !isTargetDistraction(activeTab.url)) {
       setStatus('Non-distracting tab spared. Get back to work.', 'info');
       return;
     }
 
-    // Step 4: Delay tab removal by 300ms so user hears the buzzer & sees alert
+    // Delay tab removal by 300ms so visual alert & audio buzzer register
     setTimeout(() => {
       chrome.tabs.remove(activeTab.id, () => {
-        // Step 5: Check chrome.runtime.lastError silently
         if (chrome.runtime && chrome.runtime.lastError) {
           console.warn('Tab removal note:', chrome.runtime.lastError.message);
         }
@@ -406,10 +429,12 @@ function onTimerExpired() {
 }
 
 // =============================================================================
-// 11. User Input Evaluation
+// 12. User Input Evaluation
 // =============================================================================
 
-function handleInputEvaluation() {
+function handleInputEvaluation(e) {
+  if (e) e.preventDefault();
+
   if (currentState === GameStates.FAILED) return;
 
   if (!dom.answerInput) return;
@@ -424,6 +449,8 @@ function handleInputEvaluation() {
     timeLeft = CONFIG.BASE_TIME_SECONDS;
     streakCounter += 1;
 
+    playSuccessChime();
+    triggerStreakPop();
     setStatus('✓ Correct! +20s Reset', 'info');
 
     dom.answerInput.value = '';
@@ -441,25 +468,28 @@ function handleInputEvaluation() {
 }
 
 // =============================================================================
-// 12. Initialization (Strict Manifest V3 DOMContentLoaded)
+// 13. Initialization & Event Binding (Zero inline JS)
 // =============================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
   initDOMReferences();
+  updateModeDisplay();
   generateMathProblem();
   renderProblem();
   transitionTo(GameStates.ACTIVE);
 
-  if (dom.submitBtn) {
-    dom.submitBtn.addEventListener('click', handleInputEvaluation);
+  // Auto-focus input immediately on popup open
+  if (dom.answerInput) {
+    dom.answerInput.focus();
   }
 
-  if (dom.answerInput) {
-    dom.answerInput.addEventListener('keydown', (event) => {
-      if (event.key === 'Enter') {
-        event.preventDefault();
-        handleInputEvaluation();
-      }
-    });
+  // Pitch / Mode Toggle Listener
+  if (dom.modeToggleBtn) {
+    dom.modeToggleBtn.addEventListener('click', toggleTargetMode);
+  }
+
+  // Submit via form submit listener (covers button click & Enter key)
+  if (dom.answerForm) {
+    dom.answerForm.addEventListener('submit', handleInputEvaluation);
   }
 });
