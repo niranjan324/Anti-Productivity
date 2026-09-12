@@ -55,6 +55,8 @@ let timeLeft = 22;
 let countdownTimer = null;
 let lockoutTimer = null;
 let isLockoutActive = false;
+let pendingTargetTabId = null;
+let pendingShouldTerminate = false;
 let lastEnteredValue = '[TIMEOUT]';
 let currentProblem = {
   displayString: '',
@@ -430,26 +432,26 @@ function calculateHumiliationRating(streak) {
 
 /**
  * Orchestrates the full post-mortem failure sequence:
- * 1. Capture target tab details.
- * 2. Close active tab via Chrome API.
- * 3. Start 5-second acoustic harassment siren.
- * 4. Render Shame Overlay with obituary, fatal recap, and lockout timer.
+ * 1. Capture target tab details and mute background audio.
+ * 2. Hold tab termination until user completes 7s shame sequence (prevents Chrome from dismissing the popup).
+ * 3. Start 7-second acoustic harassment siren.
+ * 4. Render Shame Overlay with obituary, fatal recap, and 7s lockout timer.
  */
 function handleExecutionAndShameScreen() {
   if (dom.answerInput) dom.answerInput.disabled = true;
   if (dom.submitBtn) dom.submitBtn.disabled = true;
 
-  // 1. Query target tab immediately
+  // 1. Query target tab immediately and record details
   if (typeof chrome !== 'undefined' && chrome.tabs) {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       let deceasedTitle = 'Distracting Browser Tab';
       let deceasedDomain = 'web.page';
-      let targetTabId = null;
-      let shouldTerminate = true;
+      pendingTargetTabId = null;
+      pendingShouldTerminate = true;
 
       if (tabs && tabs.length > 0 && tabs[0]) {
         const activeTab = tabs[0];
-        targetTabId = activeTab.id;
+        pendingTargetTabId = activeTab.id;
         deceasedTitle = activeTab.title || 'Untitled Tab';
 
         try {
@@ -459,31 +461,33 @@ function handleExecutionAndShameScreen() {
         }
 
         if (isProtectedUrl(activeTab.url)) {
-          shouldTerminate = false;
+          pendingShouldTerminate = false;
         } else if (!isDemoMode && !isTargetDistraction(activeTab.url)) {
-          shouldTerminate = false;
+          pendingShouldTerminate = false;
+        }
+
+        // Mute active tab immediately to silence distractions during harassment siren
+        if (pendingShouldTerminate && pendingTargetTabId) {
+          try {
+            chrome.tabs.update(pendingTargetTabId, { muted: true }, () => {
+              if (chrome.runtime && chrome.runtime.lastError) {
+                // Ignore
+              }
+            });
+          } catch (e) {
+            // Ignore
+          }
         }
       }
 
       // Populate Shame Screen DOM
       populateShameScreen(deceasedTitle, deceasedDomain);
-
-      // Trigger Tab Closure after slight delay
-      if (shouldTerminate && targetTabId) {
-        setTimeout(() => {
-          chrome.tabs.remove(targetTabId, () => {
-            if (chrome.runtime && chrome.runtime.lastError) {
-              console.warn('Tab termination notice:', chrome.runtime.lastError.message);
-            }
-          });
-        }, CONFIG.EXECUTION_DELAY_MS);
-      }
     });
   } else {
     populateShameScreen('Test Browser Tab', 'example.com');
   }
 
-  // 2. Start 5-second multi-oscillator harassment siren
+  // 2. Start 7-second multi-oscillator harassment siren
   if (window.AudioHarassment) {
     window.AudioHarassment.startAcousticHarassmentSiren();
   }
@@ -493,7 +497,7 @@ function handleExecutionAndShameScreen() {
     dom.shameOverlay.classList.remove('hidden');
   }
 
-  // 4. Start 5-second unskippable lockout countdown
+  // 4. Start 7-second unskippable lockout countdown
   startLockoutCountdown();
 }
 
@@ -575,6 +579,18 @@ function handleShameReset() {
 
   if (window.AudioHarassment) {
     window.AudioHarassment.stopAcousticHarassmentSiren();
+  }
+
+  // Execute the deferred tab termination now that the full 7s shame sequence has completed
+  if (pendingShouldTerminate && pendingTargetTabId && typeof chrome !== 'undefined' && chrome.tabs) {
+    const tabToKill = pendingTargetTabId;
+    pendingTargetTabId = null;
+    pendingShouldTerminate = false;
+    chrome.tabs.remove(tabToKill, () => {
+      if (chrome.runtime && chrome.runtime.lastError) {
+        console.warn('Tab termination notice:', chrome.runtime.lastError.message);
+      }
+    });
   }
 
   if (dom.shameOverlay) {
