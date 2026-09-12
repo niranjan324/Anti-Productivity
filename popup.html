@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Anti-Procrastination Tab Executioner</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body id="app-body">
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="logo-badge">
+        <span class="pulse-dot"></span>
+        <h1 class="title">TAB EXECUTIONER</h1>
+      </div>
+      <div class="streak-badge">
+        <span class="streak-label">STREAK</span>
+        <span class="streak-value" id="streak-display">0</span>
+      </div>
+    </header>
+
+    <!-- Main Game Card -->
+    <main class="main-card">
+      <!-- Countdown Timer -->
+      <div class="timer-section">
+        <div class="section-label">TIME REMAINING</div>
+        <div class="timer-display" id="timer-display">20s</div>
+      </div>
+
+      <!-- Arithmetic Problem Display -->
+      <div class="equation-section">
+        <div class="section-label">SOLVE TO SURVIVE</div>
+        <div class="equation-display" id="problem-display">--</div>
+      </div>
+
+      <!-- Input Controls -->
+      <div class="input-form">
+        <div class="input-group">
+          <input 
+            type="number" 
+            id="answer-input" 
+            class="answer-input" 
+            placeholder="Answer..." 
+            autocomplete="off" 
+            autofocus 
+          />
+          <button type="button" id="submit-btn" class="submit-btn">SUBMIT</button>
+        </div>
+      </div>
+
+      <!-- Live Feedback / Status -->
+      <div class="feedback-area" id="feedback-area" aria-live="polite"></div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="penalty-hint">⚠️ Wrong Answer = -5s Penalty | 0s = Tab Execution</div>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
