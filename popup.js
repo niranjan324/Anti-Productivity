@@ -1,6 +1,6 @@
 /**
- * Anti-Procrastination Tab Executioner (v4.5.0)
- * Terminal Interceptor GUI Controller & Camouflage Subversion Engine
+ * Anti-Procrastination Tab Executioner (v4.6.0)
+ * Terminal Interceptor GUI Controller & Synthetic TTS Gaslighting Engine
  */
 
 // =============================================================================
@@ -59,6 +59,7 @@ let isLockoutActive = false;
 let pendingTargetTabId = null;
 let pendingShouldTerminate = false;
 let lastEnteredValue = '[TIMEOUT]';
+let hasPanickedThisRound = false;
 let currentProblem = {
   displayString: '',
   solution: 0,
@@ -144,6 +145,7 @@ function playSuccessChime() {
 // =============================================================================
 
 function generateAndRenderProblem(streak) {
+  hasPanickedThisRound = false;
   currentProblem = window.MathEngine.generateExponentialProblem(streak);
 
   if (currentProblem.tierLevel === 5 && currentProblem.displayString.includes('det |')) {
@@ -319,6 +321,13 @@ function startTimerLoop() {
     }
 
     timeLeft -= 1;
+
+    if (timeLeft <= 5 && timeLeft > 0 && !hasPanickedThisRound) {
+      hasPanickedThisRound = true;
+      if (window.VoiceEngine) {
+        window.VoiceEngine.speak('TIME_PANIC');
+      }
+    }
 
     if (timeLeft <= 0) {
       timeLeft = 0;
@@ -579,6 +588,11 @@ function populateShameScreen(title, domain) {
     const randomQuote = MOCKERY_QUOTES[Math.floor(Math.random() * MOCKERY_QUOTES.length)];
     dom.shameQuoteDisplay.textContent = randomQuote;
   }
+
+  // Auditory Psychological Harassment: Clinical Robotic Eulogy
+  if (window.VoiceEngine) {
+    window.VoiceEngine.speak('LIQUIDATION_START', { tabTitle: title });
+  }
 }
 
 /**
@@ -604,6 +618,11 @@ function startLiquidationCountdown() {
       // Silence harassment siren
       if (window.AudioHarassment) {
         window.AudioHarassment.stopAcousticHarassmentSiren();
+      }
+
+      // Voice Engine Final Eulogy: Tab Purged
+      if (window.VoiceEngine) {
+        window.VoiceEngine.speak('PURGE_COMPLETE');
       }
 
       // Display terminal execution badge
@@ -676,6 +695,15 @@ function handleInputEvaluation(e) {
     // ---- Incorrect Answer ----
     dom.answerInput.value = '';
     dom.answerInput.focus();
+
+    if (window.VoiceEngine) {
+      if (currentProblem.isCamouflaged) {
+        window.VoiceEngine.speak('SABOTAGE_TRIGGERED');
+      } else {
+        window.VoiceEngine.speak('PENALTY_WRONG_ANSWER');
+      }
+    }
+
     transitionTo(GameStates.PENALTY);
   }
 }
