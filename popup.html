@@ -7,72 +7,83 @@
   <link rel="stylesheet" href="popup.css">
 </head>
 <body id="app-body">
-  <div class="container" id="main-container">
-    <!-- Top Bar: Branding, Tier Badge & Streak Counter -->
-    <header class="header">
-      <div class="brand">
-        <span class="status-dot" id="status-dot"></span>
-        <h1 class="brand-title">TAB EXECUTIONER</h1>
+  <!-- Scanline Background Overlay -->
+  <div class="scanlines"></div>
+
+  <!-- Single Vertical Flexbox Container (360x500px Strict Viewport) -->
+  <div class="terminal-container" id="main-container">
+    
+    <!-- 1. Header Bar (~40px) -->
+    <header class="hud-header">
+      <div class="status-indicator">
+        <span class="pulse-dot" id="status-dot"></span>
+        <span class="protocol-text">PROTOCOL: LOCKDOWN</span>
       </div>
-      <div class="header-badges">
-        <button type="button" class="tier-badge tier-1" id="tier-badge" title="Click to cycle difficulty tier (Tiers 1-5)">WARMUP ⚡</button>
-        <div class="streak-pill" id="streak-badge" title="Continuous correct equations">
-          <span class="streak-icon">🔥</span>
-          <span class="streak-text">STREAK</span>
-          <span class="streak-count" id="streak-display">0</span>
+      <div class="header-controls">
+        <button type="button" class="mode-chip" id="mode-toggle-btn" title="Toggle Demo Mode (All Tabs) vs Strict Mode (Distractions Only)">
+          <span id="mode-label">ALL TABS</span>
+        </button>
+        <div class="streak-pill" id="streak-badge" title="Consecutive correct answers">
+          <span class="streak-label">STREAK:</span>
+          <span class="streak-count" id="streak-display">00</span>
         </div>
       </div>
     </header>
 
-    <!-- Pitch / Mode Bar -->
-    <div class="mode-bar">
-      <span class="target-tag" id="target-indicator">TARGET: ALL ACTIVE TABS</span>
-      <button type="button" class="mode-toggle-btn" id="mode-toggle-btn" title="Toggle Demo / Strict Mode">
-        <span id="mode-label">DEMO MODE</span> ⚙️
+    <!-- 2. Tier Pill Ribbon (~30px) -->
+    <div class="tier-ribbon-container">
+      <button type="button" class="tier-ribbon tier-1" id="tier-badge" title="Click to cycle difficulty tier (Tiers 1-5)">
+        <span class="tier-icon">⚡</span>
+        <span class="tier-text" id="tier-text">TIER 1 // WARMUP</span>
       </button>
     </div>
 
-    <!-- Main Stage Card -->
-    <main class="stage-card" id="stage-card">
-      <!-- High-Visibility Timer Section -->
-      <section class="timer-section">
-        <div class="timer-header-row">
-          <span class="hud-label" id="hud-timer-label">TIME REMAINING</span>
-          <span class="decay-hint" id="decay-hint">BASE: 22s</span>
-        </div>
-        <div class="timer-display" id="timer-display">22s</div>
-      </section>
+    <!-- 3. Timer HUD Hero (~110px) -->
+    <section class="timer-hud-hero">
+      <div class="hud-meta-row">
+        <span class="hud-caption">COUNTDOWN CADENCE</span>
+        <span class="decay-badge" id="decay-hint">BASE: 22s</span>
+      </div>
+      <div class="timer-digits" id="timer-display">22.0s</div>
+      <div class="progress-track">
+        <div class="progress-bar-fill" id="progress-fill"></div>
+      </div>
+    </section>
 
-      <!-- Oversized Math Display Container -->
-      <section class="equation-section">
-        <span class="hud-label" id="equation-sublabel">CALCULATE SUM</span>
-        <pre class="equation-display" id="problem-display">--</pre>
-      </section>
+    <!-- 4. Dynamic Math Equation Card (~135px Fixed Height) -->
+    <section class="math-card" id="math-card">
+      <div class="card-corner corner-tl"></div>
+      <div class="card-corner corner-tr"></div>
+      <div class="card-corner corner-bl"></div>
+      <div class="card-corner corner-br"></div>
+      <span class="card-sublabel" id="equation-sublabel">CALCULATE SUM</span>
+      <div class="equation-container">
+        <pre class="equation-content" id="problem-display">--</pre>
+      </div>
+    </section>
 
-      <!-- Input Form -->
-      <form class="input-form" id="answer-form">
-        <div class="input-wrapper" id="input-wrapper">
+    <!-- 5. Input & Action Deck (~110px) -->
+    <footer class="action-deck">
+      <form class="deck-form" id="answer-form">
+        <div class="input-row" id="input-wrapper">
           <input 
             type="text" 
             id="answer-input" 
-            class="answer-input" 
-            placeholder="Integer answer..." 
+            class="terminal-input" 
+            placeholder="INPUT VALUE..." 
             autocomplete="off" 
             autofocus 
-            required
+            required 
           />
-          <button type="submit" id="submit-btn" class="submit-btn">SUBMIT</button>
+          <button type="submit" id="submit-btn" class="submit-action-btn">EXECUTE</button>
         </div>
       </form>
-
-      <!-- Status & Target Alert Notice -->
-      <div class="status-message" id="status-message" aria-live="polite">Ready to solve!</div>
-    </main>
-
-    <!-- Footer Rules -->
-    <footer class="footer">
-      <span class="footer-hint" id="penalty-hint">⚠️ Wrong Answer = -5s Penalty | 0s = Tab Execution</span>
+      <div class="status-deck">
+        <div class="status-readout" id="status-message" aria-live="polite">SYSTEM ARMED // READY</div>
+        <div class="action-hint" id="penalty-hint">PRESS ENTER TO VERIFY • -5s ERROR PENALTY</div>
+      </div>
     </footer>
+
   </div>
 
   <script src="math-engine.js"></script>

@@ -1,20 +1,19 @@
 /**
- * Anti-Procrastination Tab Executioner (v3.2.0)
- * Milestone 4.1: Exponential Cognitive Inflation & Complex Mental Arithmetic Engine
+ * Anti-Procrastination Tab Executioner (v4.0.0)
+ * Terminal Interceptor GUI Controller & Exponential Math Integration
  */
 
 // =============================================================================
-// 1. Constants & Targeting Configuration
+// 1. Constants & Configuration
 // =============================================================================
 const CONFIG = Object.freeze({
   COUNTDOWN_INTERVAL_MS: 1000,
-  SHAKE_DURATION_MS: 350,
+  SHAKE_DURATION_MS: 300,
   BUZZER_DURATION_MS: 400,
   EXECUTION_DELAY_MS: 300,
-  TIER_FLASH_DURATION_MS: 400
+  TIER_POP_DURATION_MS: 250
 });
 
-// Distracting domains for Strict Mode
 const TARGET_DOMAINS = [
   'youtube.com',
   'reddit.com',
@@ -49,14 +48,14 @@ let audioCtx = null;
 let currentProblem = {
   displayString: '',
   solution: 0,
-  sublabel: '',
+  sublabel: 'CALCULATE SUM',
   tierLevel: 1,
   allocatedTime: 22,
   penaltySeconds: 5
 };
 
 // =============================================================================
-// 4. DOM Cache
+// 4. DOM References
 // =============================================================================
 let dom = {};
 
@@ -64,6 +63,7 @@ function initDOMReferences() {
   dom = {
     body: document.body,
     timerDisplay: document.getElementById('timer-display'),
+    progressFill: document.getElementById('progress-fill'),
     problemDisplay: document.getElementById('problem-display'),
     equationSublabel: document.getElementById('equation-sublabel'),
     decayHint: document.getElementById('decay-hint'),
@@ -73,17 +73,18 @@ function initDOMReferences() {
     streakDisplay: document.getElementById('streak-display'),
     streakBadge: document.getElementById('streak-badge'),
     tierBadge: document.getElementById('tier-badge'),
+    tierText: document.getElementById('tier-text'),
     statusMessage: document.getElementById('status-message'),
-    targetIndicator: document.getElementById('target-indicator'),
     modeToggleBtn: document.getElementById('mode-toggle-btn'),
     modeLabel: document.getElementById('mode-label'),
     inputWrapper: document.getElementById('input-wrapper'),
-    answerForm: document.getElementById('answer-form')
+    answerForm: document.getElementById('answer-form'),
+    statusDot: document.getElementById('status-dot')
   };
 }
 
 // =============================================================================
-// 5. Zero-Dependency Web Audio & Psychoacoustic Modulator
+// 5. Zero-Dependency Web Audio Synthesizer & Modulator
 // =============================================================================
 
 function getAudioContext() {
@@ -98,7 +99,7 @@ function getAudioContext() {
 }
 
 /**
- * Psychoacoustic Stress Pulse: Modulates pitch continuously from 440Hz -> 1200Hz as time runs out.
+ * Psychoacoustic Stress Tone: Modulates frequency from 440Hz -> 1200Hz during critical countdown
  */
 function playUrgencyTone(remainingTime) {
   if (remainingTime > 6 || remainingTime <= 0) return;
@@ -109,9 +110,8 @@ function playUrgencyTone(remainingTime) {
     const osc = ctx.createOscillator();
     const gainNode = ctx.createGain();
 
-    // Map time 6s -> 1s to frequency 440Hz -> 1200Hz
     const urgencyRatio = Math.max(0, Math.min(1, (6 - remainingTime) / 5));
-    const frequency = 440 + (urgencyRatio * 760); // 440Hz to 1200Hz
+    const frequency = 440 + (urgencyRatio * 760); // 440Hz -> 1200Hz
 
     osc.type = 'sawtooth';
     osc.frequency.setValueAtTime(frequency, now);
@@ -129,9 +129,6 @@ function playUrgencyTone(remainingTime) {
   }
 }
 
-/**
- * Piercing 880Hz alert buzzer tone on 0s execution
- */
 function playBuzzerSound() {
   try {
     const ctx = getAudioContext();
@@ -164,8 +161,8 @@ function playSuccessChime() {
     const gainNode = ctx.createGain();
 
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(587.33, now); // D5
-    osc.frequency.exponentialRampToValueAtTime(880, now + 0.12); // A5
+    osc.frequency.setValueAtTime(587.33, now);
+    osc.frequency.exponentialRampToValueAtTime(880, now + 0.12);
 
     gainNode.gain.setValueAtTime(0.15, now);
     gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
@@ -181,12 +178,23 @@ function playSuccessChime() {
 }
 
 // =============================================================================
-// 6. Problem Generation & UI Synchronization
+// 6. Problem Generation & Tier HUD Formatting
 // =============================================================================
 
 function generateAndRenderProblem(streak) {
-  // Leverage math-engine.js module
   currentProblem = window.MathEngine.generateExponentialProblem(streak);
+
+  // Format matrices cleanly with brackets if applicable
+  if (currentProblem.tierLevel === 5 && currentProblem.displayString.includes('det |')) {
+    // Matrix format: [ a  b ] / [ c  d ]
+    const lines = currentProblem.displayString.split('\n');
+    if (lines.length >= 2) {
+      const line1 = lines[0].replace('det |', '[').replace('|', ']');
+      const line2 = lines[1].replace('|', '[').replace('|', ']');
+      currentProblem.displayString = `det\n${line1.trim()}\n${line2.trim()}`;
+    }
+  }
+
   renderActiveProblem();
 }
 
@@ -194,26 +202,28 @@ function updateTierUI(tierLevel) {
   if (!dom.tierBadge) return;
 
   const tierMetadata = {
-    1: { label: 'WARMUP ⚡', class: 'tier-1', hint: 'Tier 1: Linear Warmup (2-Digit & Tables)' },
-    2: { label: 'COMPOUND ⚡⚡', class: 'tier-2', hint: 'Tier 2: Nested Precedence & Compound Products' },
-    3: { label: 'MODULO / POWERS 🔥', class: 'tier-3', hint: 'Tier 3: Modulo, Square Roots & Exponents' },
-    4: { label: 'ALGEBRA MATRIX 🧠', class: 'tier-4', hint: 'Tier 4: Single-Variable Inversion' },
-    5: { label: 'APEX SINGULARITY ☣️', class: 'tier-5', hint: 'Tier 5: 2×2 Matrix Determinants & Base Conv' }
+    1: { label: 'TIER 1 // WARMUP', class: 'tier-1', icon: '⚡' },
+    2: { label: 'TIER 2 // COMPOUND', class: 'tier-2', icon: '⚡' },
+    3: { label: 'TIER 3 // MODULO & ROOTS', class: 'tier-3', icon: '🔥' },
+    4: { label: 'TIER 4 // ALGEBRA MATRIX', class: 'tier-4', icon: '🧠' },
+    5: { label: 'TIER 5 // APEX SINGULARITY', class: 'tier-5', icon: '☣️' }
   };
 
   const currentMeta = tierMetadata[tierLevel] || tierMetadata[1];
 
   if (tierLevel !== currentTierLevel) {
     currentTierLevel = tierLevel;
-    dom.tierBadge.classList.add('tier-level-up');
+    dom.tierBadge.classList.add('tier-pop');
     setTimeout(() => {
-      if (dom.tierBadge) dom.tierBadge.classList.remove('tier-level-up');
-    }, CONFIG.TIER_FLASH_DURATION_MS);
+      if (dom.tierBadge) dom.tierBadge.classList.remove('tier-pop');
+    }, CONFIG.TIER_POP_DURATION_MS);
   }
 
-  dom.tierBadge.textContent = currentMeta.label;
-  dom.tierBadge.className = `tier-badge ${currentMeta.class}`;
-  dom.tierBadge.title = `Difficulty: ${currentMeta.hint} (Click to cycle tier)`;
+  if (dom.tierText) {
+    dom.tierText.textContent = currentMeta.label;
+  }
+  dom.tierBadge.className = `tier-ribbon ${currentMeta.class}`;
+  dom.tierBadge.title = `Difficulty: ${currentMeta.label} (Click to cycle tier)`;
 
   if (dom.equationSublabel && currentProblem.sublabel) {
     dom.equationSublabel.textContent = currentProblem.sublabel;
@@ -224,7 +234,7 @@ function updateTierUI(tierLevel) {
   }
 
   if (dom.penaltyHint) {
-    dom.penaltyHint.textContent = `⚠️ Wrong Answer = -${currentProblem.penaltySeconds}s Penalty | 0s = Tab Execution`;
+    dom.penaltyHint.textContent = `PRESS ENTER TO VERIFY • -${currentProblem.penaltySeconds}s ERROR PENALTY`;
   }
 }
 
@@ -234,9 +244,6 @@ function renderActiveProblem() {
   updateTierUI(currentProblem.tierLevel);
 }
 
-/**
- * Interactive tier jumper: cycles between Tiers 1 through 5
- */
 function cycleDifficultyTier() {
   const nextTier = (currentTierLevel % 5) + 1;
   const tierStreakMap = { 1: 0, 2: 3, 3: 6, 4: 9, 5: 12 };
@@ -248,7 +255,7 @@ function cycleDifficultyTier() {
   syncUI();
   saveSessionState();
 
-  setStatus(`Switched to Tier ${nextTier}: ${dom.tierBadge.textContent}`, 'info');
+  setStatus(`TIER OVERRIDE: ${dom.tierText ? dom.tierText.textContent : 'TIER ' + nextTier}`, 'info');
   triggerStreakPop();
 }
 
@@ -259,19 +266,30 @@ function cycleDifficultyTier() {
 function syncUI() {
   if (!dom.timerDisplay || !dom.body) return;
 
+  // 1. Digital Countdown Readout
   dom.timerDisplay.textContent = `${Math.max(0, timeLeft)}s`;
 
-  if (dom.streakDisplay) {
-    dom.streakDisplay.textContent = String(streakCounter);
+  // 2. Smooth Depleting Progress Bar
+  if (dom.progressFill && currentProblem.allocatedTime > 0) {
+    const percent = Math.max(0, Math.min(100, (timeLeft / currentProblem.allocatedTime) * 100));
+    dom.progressFill.style.width = `${percent}%`;
   }
 
+  // 3. Formatted Streak Pill (e.g. "07")
+  if (dom.streakDisplay) {
+    dom.streakDisplay.textContent = String(streakCounter).padStart(2, '0');
+  }
+
+  // 4. Dynamic Stress Classes (Warning <= 8s, Panic <= 4s)
   dom.body.classList.remove('state-warning', 'state-panic', 'state-failed');
 
   if (currentState === GameStates.FAILED || timeLeft <= 0) {
     dom.body.classList.add('state-failed');
-  } else if (timeLeft <= 5) {
+  } else if (timeLeft <= 4) {
+    // Critical Threat State: <= 4 seconds
     dom.body.classList.add('state-panic');
-  } else if (timeLeft <= 10) {
+  } else if (timeLeft <= 8) {
+    // Warning State: <= 8 seconds
     dom.body.classList.add('state-warning');
   }
 }
@@ -279,7 +297,7 @@ function syncUI() {
 function setStatus(message, type = 'info') {
   if (!dom.statusMessage) return;
   dom.statusMessage.textContent = message;
-  dom.statusMessage.className = `status-message ${type}`;
+  dom.statusMessage.className = `status-readout ${type}`;
 }
 
 // =============================================================================
@@ -293,20 +311,16 @@ function toggleTargetMode() {
 
 function updateModeDisplay() {
   if (isDemoMode) {
-    if (dom.modeLabel) dom.modeLabel.textContent = 'DEMO MODE';
+    if (dom.modeLabel) dom.modeLabel.textContent = 'ALL TABS';
     if (dom.targetIndicator) {
       dom.targetIndicator.textContent = 'TARGET: ALL ACTIVE TABS';
-      dom.targetIndicator.style.color = '#38bdf8';
-      dom.targetIndicator.style.borderColor = 'rgba(56, 189, 248, 0.3)';
-      dom.targetIndicator.style.background = 'rgba(56, 189, 248, 0.12)';
+      dom.targetIndicator.style.color = 'var(--accent-cyan)';
     }
   } else {
-    if (dom.modeLabel) dom.modeLabel.textContent = 'STRICT MODE';
+    if (dom.modeLabel) dom.modeLabel.textContent = 'SOCIAL ONLY';
     if (dom.targetIndicator) {
-      dom.targetIndicator.textContent = 'TARGET: SOCIAL MEDIA ONLY';
+      dom.targetIndicator.textContent = 'TARGET: DISTRACTIONS ONLY';
       dom.targetIndicator.style.color = '#a78bfa';
-      dom.targetIndicator.style.borderColor = 'rgba(167, 139, 250, 0.3)';
-      dom.targetIndicator.style.background = 'rgba(167, 139, 250, 0.12)';
     }
   }
 }
@@ -356,7 +370,7 @@ function startTimerLoop() {
 
     timeLeft -= 1;
 
-    // Psychoacoustic feedback when countdown is under 6 seconds
+    // Psychoacoustic frequency ramp under 6 seconds
     if (timeLeft <= 6 && timeLeft > 0) {
       playUrgencyTone(timeLeft);
     }
@@ -403,9 +417,9 @@ function transitionTo(nextState) {
     case GameStates.PENALTY: {
       const penalty = currentProblem.penaltySeconds || 5;
       timeLeft = Math.max(0, timeLeft - penalty);
-      setStatus(`✗ Incorrect! -${penalty}s Penalty`, 'error');
+      setStatus(`ERROR // PENALTY APPLIED: -${penalty}s`, 'error');
 
-      triggerTypoPenaltyShake();
+      triggerErrorShake();
 
       if (timeLeft <= 0) {
         timeLeft = 0;
@@ -427,16 +441,16 @@ function transitionTo(nextState) {
   }
 }
 
-function triggerTypoPenaltyShake() {
+function triggerErrorShake() {
   const targetEl = dom.inputWrapper || dom.answerInput;
   if (!targetEl) return;
 
-  targetEl.classList.remove('shake');
-  void targetEl.offsetWidth;
-  targetEl.classList.add('shake');
+  targetEl.classList.remove('error-shake');
+  void targetEl.offsetWidth; // Force reflow
+  targetEl.classList.add('error-shake');
 
   setTimeout(() => {
-    targetEl.classList.remove('shake');
+    targetEl.classList.remove('error-shake');
   }, CONFIG.SHAKE_DURATION_MS);
 }
 
@@ -529,12 +543,12 @@ function handleInputEvaluation(e) {
 
   if (rawInput === '') return;
 
-  // Extract clean integer (handles negative integers, "x=10", "10", "0x3F => 63")
+  // Clean parse: handles negative numbers, "x=10", "10", hex/binary
   const cleanInput = rawInput.replace(/[^0-9\-]/g, '');
   const parsedValue = parseInt(cleanInput, 10);
 
   if (!isNaN(parsedValue) && parsedValue === currentProblem.solution) {
-    // ---- Correct Answer: Exponential escalation ----
+    // ---- Correct Answer ----
     streakCounter += 1;
     saveSessionState();
 
@@ -543,14 +557,14 @@ function handleInputEvaluation(e) {
 
     playSuccessChime();
     triggerStreakPop();
-    setStatus(`✓ Correct! +${currentProblem.allocatedTime}s Reset (Tier ${currentProblem.tierLevel})`, 'info');
+    setStatus(`CORRECT // CADENCE RESET (+${currentProblem.allocatedTime}s)`, 'info');
 
     dom.answerInput.value = '';
     dom.answerInput.focus();
 
     syncUI();
   } else {
-    // ---- Incorrect Answer: Exponential Penalty ----
+    // ---- Incorrect Answer ----
     dom.answerInput.value = '';
     dom.answerInput.focus();
     transitionTo(GameStates.PENALTY);
@@ -558,14 +572,13 @@ function handleInputEvaluation(e) {
 }
 
 // =============================================================================
-// 14. Initialization
+// 14. Initialization (Strict Manifest V3 DOMContentLoaded)
 // =============================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
   initDOMReferences();
   updateModeDisplay();
 
-  // Load persistent streak or default to 0
   loadSessionState(() => {
     generateAndRenderProblem(streakCounter);
     timeLeft = currentProblem.allocatedTime;

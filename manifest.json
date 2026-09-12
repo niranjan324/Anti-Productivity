@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Anti-Procrastination Tab Executioner",
-  "version": "3.2.0",
-  "description": "Tests human alertness under a ticking countdown. Features exponential arithmetic inflation and complex cognitive scaling!",
+  "version": "4.0.0",
+  "description": "Tactical Cyberpunk Interceptor: Solve exponential cognitive math challenges to keep active browser tabs alive!",
   "permissions": [
     "tabs",
     "activeTab",
