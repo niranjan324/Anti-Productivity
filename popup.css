@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Anti-Procrastination Tab Executioner - Terminal Interceptor Theme (v4.1.0)
+   Anti-Procrastination Tab Executioner - Terminal Interceptor Theme (v4.2.0)
    Strict Viewport Geometry: 360px × 500px (Zero Scrollbar Guaranteed)
    ========================================================================== */
 
@@ -814,7 +814,8 @@ body.state-panic .terminal-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+  width: 100%;
 }
 
 .lockout-timer {
@@ -824,6 +825,13 @@ body.state-panic .terminal-container {
   letter-spacing: 0.1em;
   color: #ff2e54;
   animation: alertPulse 0.3s infinite alternate;
+  text-align: center;
+}
+
+.lockout-timer.redemption-ready {
+  color: #10b981;
+  text-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
+  animation: none;
 }
 
 .retry-action-btn {
@@ -840,13 +848,29 @@ body.state-panic .terminal-container {
   cursor: pointer;
   box-shadow: 0 0 16px rgba(255, 46, 84, 0.7);
   transition: transform 0.1s ease, filter 0.2s ease, background 0.2s ease;
+  animation: retryPulse 1.2s infinite ease-in-out;
 }
 
-.retry-action-btn:hover {
+@keyframes retryPulse {
+  0%   { transform: scale(1); box-shadow: 0 0 12px rgba(255, 46, 84, 0.6); }
+  50%  { transform: scale(1.03); box-shadow: 0 0 22px rgba(255, 46, 84, 0.95); }
+  100% { transform: scale(1); box-shadow: 0 0 12px rgba(255, 46, 84, 0.6); }
+}
+
+.retry-action-btn:hover:not(:disabled) {
   filter: brightness(1.15);
   background: #ff476a;
 }
 
-.retry-action-btn:active {
+.retry-action-btn:active:not(:disabled) {
   transform: scale(0.97);
 }
+
+.retry-action-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+  animation: none;
+  box-shadow: none;
+}
+

@@ -1,5 +1,5 @@
 /**
- * Anti-Procrastination Tab Executioner (v4.1.0)
+ * Anti-Procrastination Tab Executioner (v4.2.0)
  * Terminal Interceptor GUI Controller & Post-Mortem Shame Screen Integration
  */
 
@@ -11,7 +11,7 @@ const CONFIG = Object.freeze({
   SHAKE_DURATION_MS: 300,
   EXECUTION_DELAY_MS: 300,
   TIER_POP_DURATION_MS: 250,
-  LOCKOUT_SECONDS: 5
+  LOCKOUT_SECONDS: 7
 });
 
 const TARGET_DOMAINS = [
@@ -54,6 +54,7 @@ let currentTierLevel = 1;
 let timeLeft = 22;
 let countdownTimer = null;
 let lockoutTimer = null;
+let isLockoutActive = false;
 let lastEnteredValue = '[TIMEOUT]';
 let currentProblem = {
   displayString: '',
@@ -524,14 +525,16 @@ function populateShameScreen(title, domain) {
 
 function startLockoutCountdown() {
   let lockoutSeconds = CONFIG.LOCKOUT_SECONDS;
+  isLockoutActive = true;
 
   if (dom.lockoutTimerDisplay) {
-    dom.lockoutTimerDisplay.classList.remove('hidden');
-    dom.lockoutTimerDisplay.textContent = `SYSTEM LOCKED: 0${lockoutSeconds}s`;
+    dom.lockoutTimerDisplay.classList.remove('hidden', 'redemption-ready');
+    dom.lockoutTimerDisplay.textContent = `PUNISHMENT LOCKOUT: 0${lockoutSeconds}s`;
   }
 
   if (dom.shameRetryBtn) {
     dom.shameRetryBtn.classList.add('hidden');
+    dom.shameRetryBtn.disabled = true;
   }
 
   clearInterval(lockoutTimer);
@@ -540,15 +543,25 @@ function startLockoutCountdown() {
 
     if (lockoutSeconds <= 0) {
       clearInterval(lockoutTimer);
-      if (dom.lockoutTimerDisplay) dom.lockoutTimerDisplay.classList.add('hidden');
-      if (dom.shameRetryBtn) dom.shameRetryBtn.classList.remove('hidden');
+      isLockoutActive = false;
+
+      if (dom.lockoutTimerDisplay) {
+        dom.lockoutTimerDisplay.textContent = 'SYSTEM READY FOR REDEMPTION';
+        dom.lockoutTimerDisplay.classList.add('redemption-ready');
+      }
+
+      if (dom.shameRetryBtn) {
+        dom.shameRetryBtn.classList.remove('hidden');
+        dom.shameRetryBtn.disabled = false;
+        dom.shameRetryBtn.focus();
+      }
 
       if (window.AudioHarassment) {
         window.AudioHarassment.stopAcousticHarassmentSiren();
       }
     } else {
       if (dom.lockoutTimerDisplay) {
-        dom.lockoutTimerDisplay.textContent = `SYSTEM LOCKED: 0${lockoutSeconds}s`;
+        dom.lockoutTimerDisplay.textContent = `PUNISHMENT LOCKOUT: 0${lockoutSeconds}s`;
       }
     }
   }, 1000);
@@ -558,6 +571,8 @@ function startLockoutCountdown() {
  * Resets the session after the user confesses and clicks retry
  */
 function handleShameReset() {
+  if (isLockoutActive) return; // Strict lock during punishment cooldown
+
   if (window.AudioHarassment) {
     window.AudioHarassment.stopAcousticHarassmentSiren();
   }
@@ -593,7 +608,7 @@ function handleShameReset() {
 function handleInputEvaluation(e) {
   if (e) e.preventDefault();
 
-  if (currentState === GameStates.FAILED) return;
+  if (currentState === GameStates.FAILED || isLockoutActive) return;
 
   if (!dom.answerInput) return;
   const rawInput = dom.answerInput.value.trim();
@@ -666,4 +681,14 @@ document.addEventListener('DOMContentLoaded', () => {
   if (dom.shameRetryBtn) {
     dom.shameRetryBtn.addEventListener('click', handleShameReset);
   }
+
+  // Keyboard shortcut suppression during punishment lockout
+  window.addEventListener('keydown', (e) => {
+    if (isLockoutActive) {
+      if (['Enter', ' ', 'Escape', 'Tab'].includes(e.key) || e.code === 'Space' || e.code === 'Enter') {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    }
+  }, true);
 });

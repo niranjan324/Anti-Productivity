@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Anti-Procrastination Tab Executioner",
-  "version": "4.1.0",
-  "description": "Tactical Cyberpunk Interceptor with Post-Mortem Shame HUD and Extended Acoustic Harassment Engine!",
+  "version": "4.2.0",
+  "description": "Tactical Cyberpunk Interceptor with Post-Mortem Shame HUD and 7-Second Synchronized Acoustic Siren Lockout!",
   "permissions": [
     "tabs",
     "activeTab",
