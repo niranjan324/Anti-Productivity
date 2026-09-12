@@ -8,16 +8,19 @@
 </head>
 <body id="app-body">
   <div class="container" id="main-container">
-    <!-- Top Bar: Branding & Streak Counter -->
+    <!-- Top Bar: Branding, Tier Badge & Streak Counter -->
     <header class="header">
       <div class="brand">
         <span class="status-dot" id="status-dot"></span>
         <h1 class="brand-title">TAB EXECUTIONER</h1>
       </div>
-      <div class="streak-pill" id="streak-badge" title="Continuous correct equations">
-        <span class="streak-icon">🔥</span>
-        <span class="streak-text">STREAK</span>
-        <span class="streak-count" id="streak-display">0</span>
+      <div class="header-badges">
+        <span class="tier-badge tier-1" id="tier-badge" title="Adaptive Difficulty Tier">WARMUP</span>
+        <div class="streak-pill" id="streak-badge" title="Continuous correct equations">
+          <span class="streak-icon">🔥</span>
+          <span class="streak-text">STREAK</span>
+          <span class="streak-count" id="streak-display">0</span>
+        </div>
       </div>
     </header>
 

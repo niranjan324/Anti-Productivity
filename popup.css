@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Anti-Procrastination Tab Executioner - Stage-Ready Theme (v3.0.0)
+   Anti-Procrastination Tab Executioner - Stage-Ready Theme (v3.1.0)
    ========================================================================== */
 
 :root {
@@ -23,6 +23,12 @@
   
   --accent-panic: #ef4444;       /* Neon Danger Red */
   --accent-panic-glow: rgba(239, 68, 68, 0.7);
+
+  /* Tier Colors */
+  --tier-1-color: #22c55e;
+  --tier-2-color: #eab308;
+  --tier-3-color: #f97316;
+  --tier-4-color: #a855f7;
 
   /* Typography Stacks */
   --font-mono: 'Courier New', 'SF Mono', 'Roboto Mono', 'Cascadia Code', monospace;
@@ -88,46 +94,116 @@ html, body {
   color: var(--text-primary);
 }
 
-.streak-pill {
+.header-badges {
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+/* ==========================================================================
+   Dynamic Difficulty Tier Badges
+   ========================================================================== */
+.tier-badge {
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.8px;
+  padding: 3px 7px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  transition: all 0.25s ease;
+  border: 1px solid transparent;
+}
+
+/* Tier 1: Warmup */
+.tier-badge.tier-1 {
+  color: #86efac;
+  background: rgba(34, 197, 94, 0.12);
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+/* Tier 2: Accelerated */
+.tier-badge.tier-2 {
+  color: #fde047;
+  background: rgba(234, 179, 8, 0.15);
+  border-color: rgba(234, 179, 8, 0.4);
+}
+
+/* Tier 3: High Stress */
+.tier-badge.tier-3 {
+  color: #fdba74;
+  background: rgba(249, 115, 22, 0.16);
+  border-color: rgba(249, 115, 22, 0.45);
+}
+
+/* Tier 4: Algebra Hazard (Pulsing Neon Violet) */
+.tier-badge.tier-4 {
+  color: #d8b4fe;
+  background: rgba(168, 85, 247, 0.2);
+  border-color: rgba(168, 85, 247, 0.6);
+  animation: hazard-glow 1.2s infinite alternate ease-in-out;
+}
+
+@keyframes hazard-glow {
+  0% {
+    box-shadow: 0 0 6px rgba(168, 85, 247, 0.3);
+    border-color: rgba(168, 85, 247, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 14px rgba(168, 85, 247, 0.8);
+    border-color: rgba(216, 180, 254, 0.9);
+  }
+}
+
+/* 400ms Tier Level-Up Flash Animation */
+.tier-level-up {
+  animation: tier-upgrade 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes tier-upgrade {
+  0% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: scale(1.3);
+    filter: brightness(1.6);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+  }
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+}
+
+/* Streak Pill */
+.streak-pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
   background: var(--bg-card);
-  padding: 4px 10px;
+  padding: 4px 8px;
   border-radius: 9999px;
   border: 1px solid var(--border-calm);
   transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.streak-icon {
-  font-size: 12px;
-}
-
-.streak-text {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  color: var(--text-secondary);
-}
-
+.streak-icon { font-size: 11px; }
+.streak-text { font-size: 9px; font-weight: 700; letter-spacing: 0.5px; color: var(--text-secondary); }
 .streak-count {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 800;
   font-family: var(--font-mono);
   color: var(--accent-calm);
   transition: color 0.3s ease;
 }
 
-/* Streak +1 Pop Animation */
 .streak-pop {
   transform: scale(1.18);
   border-color: var(--accent-calm);
   box-shadow: 0 0 12px var(--accent-calm-glow);
 }
 
-/* ==========================================================================
-   Pitch / Mode Bar
-   ========================================================================== */
+/* Pitch / Mode Bar */
 .mode-bar {
   display: flex;
   justify-content: space-between;
@@ -164,9 +240,7 @@ html, body {
   background: #273549;
 }
 
-/* ==========================================================================
-   Main Stage Card
-   ========================================================================== */
+/* Main Stage Card */
 .stage-card {
   background: var(--bg-card);
   border: 2px solid var(--border-calm);
@@ -187,7 +261,6 @@ html, body {
   text-align: center;
 }
 
-/* Timer Section */
 .timer-section {
   display: flex;
   flex-direction: column;
@@ -206,7 +279,6 @@ html, body {
   transition: color 0.2s ease, text-shadow 0.2s ease;
 }
 
-/* Equation Section */
 .equation-section {
   display: flex;
   flex-direction: column;
@@ -216,21 +288,22 @@ html, body {
   padding: 12px 10px;
   border: 1px solid var(--border-calm);
   gap: 4px;
+  min-height: 72px;
+  justify-content: center;
 }
 
 .equation-display {
   font-family: var(--font-mono);
-  font-size: 2rem;
+  font-size: 1.8rem;
   font-weight: 800;
-  letter-spacing: 2px;
+  letter-spacing: 1.5px;
   color: #ffffff;
   text-align: center;
+  word-break: break-word;
 }
 
 /* Input Form */
-.input-form {
-  width: 100%;
-}
+.input-form { width: 100%; }
 
 .input-wrapper {
   display: flex;
@@ -279,15 +352,9 @@ html, body {
   transition: filter 0.2s ease, transform 0.1s ease;
 }
 
-.submit-btn:hover {
-  filter: brightness(1.15);
-}
+.submit-btn:hover { filter: brightness(1.15); }
+.submit-btn:active { transform: scale(0.96); }
 
-.submit-btn:active {
-  transform: scale(0.96);
-}
-
-/* Status Message Area */
 .status-message {
   min-height: 22px;
   font-size: 11px;
@@ -297,18 +364,9 @@ html, body {
   transition: color 0.2s ease;
 }
 
-.status-message.info {
-  color: #38bdf8;
-}
-
-.status-message.warn {
-  color: #fbbf24;
-}
-
-.status-message.error {
-  color: #f87171;
-}
-
+.status-message.info  { color: #38bdf8; }
+.status-message.warn  { color: #fbbf24; }
+.status-message.error { color: #f87171; }
 .status-message.alert {
   color: #ef4444;
   font-size: 12px;
@@ -316,16 +374,8 @@ html, body {
   animation: panic-text-pulse 0.25s infinite alternate;
 }
 
-/* Footer */
-.footer {
-  text-align: center;
-}
-
-.footer-hint {
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--text-muted);
-}
+.footer { text-align: center; }
+.footer-hint { font-size: 10px; font-weight: 600; color: var(--text-muted); }
 
 /* ==========================================================================
    DYNAMIC STRESS-LEVEL VISUAL SYSTEM
@@ -353,12 +403,8 @@ body.state-warning .answer-input:focus {
 }
 
 @keyframes warning-pulse {
-  0% {
-    box-shadow: 0 0 8px rgba(234, 179, 8, 0.3);
-  }
-  100% {
-    box-shadow: 0 0 24px rgba(234, 179, 8, 0.65);
-  }
+  0%   { box-shadow: 0 0 8px rgba(234, 179, 8, 0.3); }
+  100% { box-shadow: 0 0 24px rgba(234, 179, 8, 0.65); }
 }
 
 /* State: Panic (<= 5s) */
@@ -387,54 +433,37 @@ body.state-panic .answer-input:focus {
   box-shadow: 0 0 16px var(--accent-panic-glow);
 }
 
-/* Subtle Stage Panic Vibration */
 body.state-panic .container {
   animation: micro-vibrate 0.15s infinite ease-in-out;
 }
 
 @keyframes panic-pulse {
-  0% {
-    box-shadow: 0 0 10px rgba(239, 68, 68, 0.4), inset 0 0 8px rgba(239, 68, 68, 0.2);
-  }
-  100% {
-    box-shadow: 0 0 32px rgba(239, 68, 68, 0.95), inset 0 0 16px rgba(239, 68, 68, 0.5);
-  }
+  0%   { box-shadow: 0 0 10px rgba(239, 68, 68, 0.4), inset 0 0 8px rgba(239, 68, 68, 0.2); }
+  100% { box-shadow: 0 0 32px rgba(239, 68, 68, 0.95), inset 0 0 16px rgba(239, 68, 68, 0.5); }
 }
 
 @keyframes panic-text-pulse {
-  0% {
-    transform: scale(1);
-  }
-  100% {
-    transform: scale(1.05);
-  }
+  0%   { transform: scale(1); }
+  100% { transform: scale(1.05); }
 }
 
 @keyframes micro-vibrate {
-  0% { transform: translate(0, 0); }
-  25% { transform: translate(0.5px, -0.5px); }
-  50% { transform: translate(-0.5px, 0.5px); }
-  75% { transform: translate(-0.5px, -0.5px); }
+  0%   { transform: translate(0, 0); }
+  25%  { transform: translate(0.5px, -0.5px); }
+  50%  { transform: translate(-0.5px, 0.5px); }
+  75%  { transform: translate(-0.5px, -0.5px); }
   100% { transform: translate(0, 0); }
 }
 
-/* ==========================================================================
-   Interactive Micro-Interactions (Typo Penalty Shake)
-   ========================================================================== */
+/* 350ms Input Shake Animation */
 .shake {
   animation: shake 0.35s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
 
 @keyframes shake {
-  0%, 100% {
-    transform: translateX(0);
-  }
-  20%, 60% {
-    transform: translateX(-10px);
-  }
-  40%, 80% {
-    transform: translateX(10px);
-  }
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-10px); }
+  40%, 80% { transform: translateX(10px); }
 }
 
 .shake .answer-input {
@@ -442,9 +471,7 @@ body.state-panic .container {
   box-shadow: 0 0 16px rgba(239, 68, 68, 0.8) !important;
 }
 
-/* ==========================================================================
-   State: Failed / Executed
-   ========================================================================== */
+/* State: Failed / Executed */
 body.state-failed .stage-card {
   border-color: var(--accent-panic);
   background: #1e090d;
