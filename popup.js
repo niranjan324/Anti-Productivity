@@ -1,6 +1,6 @@
 /**
- * Anti-Procrastination Tab Executioner (v3.1.0)
- * Feature: Dynamic Arithmetic Inflation & Difficulty Scaling
+ * Anti-Procrastination Tab Executioner (v3.1.1)
+ * Dynamic Arithmetic Inflation Engine with Persistence & Interactive Tier Switching
  */
 
 // =============================================================================
@@ -15,7 +15,6 @@ const CONFIG = Object.freeze({
   TIER_FLASH_DURATION_MS: 400
 });
 
-// Distracting domains for Strict Mode
 const TARGET_DOMAINS = [
   'youtube.com',
   'reddit.com',
@@ -64,6 +63,7 @@ function initDOMReferences() {
     body: document.body,
     timerDisplay: document.getElementById('timer-display'),
     problemDisplay: document.getElementById('problem-display'),
+    equationSublabel: document.getElementById('equation-sublabel'),
     answerInput: document.getElementById('answer-input'),
     submitBtn: document.getElementById('submit-btn'),
     streakDisplay: document.getElementById('streak-display'),
@@ -219,29 +219,30 @@ function generateInflatedProblem(streak) {
 
     if (isChaining) {
       // 3-term Arithmetic Chaining: (A ± B) ± C
-      const a = getRandomInt(8, 25);
-      const b = getRandomInt(5, 20);
+      const a = getRandomInt(10, 30);
+      const b = getRandomInt(4, 18);
       const c = getRandomInt(3, 15);
-      const op1 = Math.random() > 0.5 ? '+' : '-';
-      const op2 = Math.random() > 0.5 ? '+' : '-';
+      const isFirstAdd = Math.random() > 0.5;
+      const isSecondAdd = Math.random() > 0.5;
 
-      let intermediate = (op1 === '+') ? (a + b) : (a - b);
-      if (intermediate < 0) {
-        // Prevent negative intermediate
-        intermediate = a + b;
-        solution = (op2 === '+') ? (intermediate + c) : Math.max(0, intermediate - c);
-        displayString = `${a} + ${b} ${op2} ${c} = ?`;
+      let firstResult = isFirstAdd ? (a + b) : Math.max(a, b) - Math.min(a, b);
+      let op1 = isFirstAdd ? '+' : '-';
+      let term1 = isFirstAdd ? a : Math.max(a, b);
+      let term2 = isFirstAdd ? b : Math.min(a, b);
+
+      let op2 = isSecondAdd ? '+' : '-';
+      if (!isSecondAdd && firstResult < c) {
+        op2 = '+'; // avoid negative total
+        solution = firstResult + c;
+      } else if (isSecondAdd) {
+        solution = firstResult + c;
       } else {
-        solution = (op2 === '+') ? (intermediate + c) : (intermediate - c);
-        if (solution < 0) {
-          solution = intermediate + c;
-          displayString = `${a} ${op1} ${b} + ${c} = ?`;
-        } else {
-          displayString = `${a} ${op1} ${b} ${op2} ${c} = ?`;
-        }
+        solution = firstResult - c;
       }
+
+      displayString = `${term1} ${op1} ${term2} ${op2} ${c} = ?`;
     } else {
-      // Heavy Product: Two-digit by single-digit
+      // Heavy Product
       const a = getRandomInt(13, 25);
       const b = getRandomInt(4, 9);
       solution = a * b;
@@ -258,16 +259,13 @@ function generateInflatedProblem(streak) {
     const b = getRandomInt(1, 15);
 
     if (isAddition) {
-      // Ax + B = C
       const c = (a * x) + b;
       displayString = `Find x: ${a}x + ${b} = ${c}`;
     } else {
-      // Ax - B = C
       const c = (a * x) - b;
       if (c >= 0) {
         displayString = `Find x: ${a}x - ${b} = ${c}`;
       } else {
-        // Fallback to addition if negative C
         const cAdd = (a * x) + b;
         displayString = `Find x: ${a}x + ${b} = ${cAdd}`;
       }
@@ -287,15 +285,14 @@ function updateTierUI(tierLevel) {
   if (!dom.tierBadge) return;
 
   const tierMetadata = {
-    1: { label: 'WARMUP', class: 'tier-1' },
-    2: { label: 'ACCELERATED', class: 'tier-2' },
-    3: { label: 'HIGH STRESS', class: 'tier-3' },
-    4: { label: 'ALGEBRA HAZARD', class: 'tier-4' }
+    1: { label: 'WARMUP ⚡', class: 'tier-1', hint: 'Tier 1: Simple Addition/Subtraction' },
+    2: { label: 'ACCELERATED ⚡⚡', class: 'tier-2', hint: 'Tier 2: Double Digits & Multi' },
+    3: { label: 'HIGH STRESS 🔥', class: 'tier-3', hint: 'Tier 3: 3-Term Equations & Heavy Multi' },
+    4: { label: 'ALGEBRA HAZARD ☣️', class: 'tier-4', hint: 'Tier 4: Solve for x' }
   };
 
   const currentMeta = tierMetadata[tierLevel] || tierMetadata[1];
 
-  // Detect Level-Up Escalation
   if (tierLevel !== currentTierLevel) {
     currentTierLevel = tierLevel;
     dom.tierBadge.classList.add('tier-level-up');
@@ -306,12 +303,36 @@ function updateTierUI(tierLevel) {
 
   dom.tierBadge.textContent = currentMeta.label;
   dom.tierBadge.className = `tier-badge ${currentMeta.class}`;
+  dom.tierBadge.title = `Difficulty: ${currentMeta.hint} (Click to cycle tier)`;
+
+  if (dom.equationSublabel) {
+    dom.equationSublabel.textContent = (tierLevel === 4) ? 'SUBMIT THE INTEGER VALUE OF X' : 'SOLVE TO KEEP TAB ALIVE';
+  }
 }
 
 function renderActiveProblem() {
   if (!dom.problemDisplay) return;
   dom.problemDisplay.textContent = currentProblem.displayString;
   updateTierUI(currentProblem.tierLevel);
+}
+
+/**
+ * Allows the user/presenter to manually cycle tiers by clicking the Tier Badge
+ */
+function cycleDifficultyTier() {
+  const nextTier = (currentTierLevel % 4) + 1;
+  const tierStreakMap = { 1: 0, 2: 4, 3: 8, 4: 12 };
+  streakCounter = tierStreakMap[nextTier] || 0;
+
+  generateInflatedProblem(streakCounter);
+  timeLeft = currentProblem.allocatedTime;
+
+  renderActiveProblem();
+  syncUI();
+  saveSessionState();
+
+  setStatus(`Switched to Tier ${nextTier}: ${dom.tierBadge.textContent}`, 'info');
+  triggerStreakPop();
 }
 
 // =============================================================================
@@ -374,7 +395,37 @@ function updateModeDisplay() {
 }
 
 // =============================================================================
-// 9. Timer Cadence & Game Loop
+// 9. Session Persistence (chrome.storage)
+// =============================================================================
+
+function loadSessionState(callback) {
+  if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+    chrome.storage.local.get(['savedStreak'], (result) => {
+      if (result && typeof result.savedStreak === 'number') {
+        streakCounter = result.savedStreak;
+      }
+      callback();
+    });
+  } else {
+    callback();
+  }
+}
+
+function saveSessionState() {
+  if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+    chrome.storage.local.set({ savedStreak: streakCounter });
+  }
+}
+
+function resetSessionState() {
+  streakCounter = 0;
+  if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+    chrome.storage.local.set({ savedStreak: 0 });
+  }
+}
+
+// =============================================================================
+// 10. Timer Cadence & Game Loop
 // =============================================================================
 
 function startTimerLoop() {
@@ -406,7 +457,7 @@ function stopTimerLoop() {
 }
 
 // =============================================================================
-// 10. State Machine Transitions & Micro-Interactions
+// 11. State Machine Transitions & Micro-Interactions
 // =============================================================================
 
 function transitionTo(nextState) {
@@ -428,7 +479,6 @@ function transitionTo(nextState) {
       break;
 
     case GameStates.PENALTY:
-      // Deduct penalty seconds without resetting streak counter
       timeLeft = Math.max(0, timeLeft - CONFIG.PENALTY_SECONDS);
       setStatus(`✗ Incorrect! -${CONFIG.PENALTY_SECONDS}s Penalty`, 'error');
 
@@ -446,6 +496,7 @@ function transitionTo(nextState) {
 
     case GameStates.FAILED:
       stopTimerLoop();
+      resetSessionState();
       syncUI();
       onTimerExpired();
       break;
@@ -477,7 +528,7 @@ function triggerStreakPop() {
 }
 
 // =============================================================================
-// 11. Tab Termination & Safety Guards
+// 12. Tab Termination & Safety Guards
 // =============================================================================
 
 function isProtectedUrl(url) {
@@ -541,7 +592,7 @@ function onTimerExpired() {
 }
 
 // =============================================================================
-// 12. User Input Evaluation
+// 13. User Input Evaluation
 // =============================================================================
 
 function handleInputEvaluation(e) {
@@ -554,19 +605,21 @@ function handleInputEvaluation(e) {
 
   if (rawInput === '') return;
 
-  const parsedValue = parseInt(rawInput, 10);
+  // Extract integer (handles "6", "-5", "x=6", "Find x: 6")
+  const cleanInput = rawInput.replace(/[^0-9\-]/g, '');
+  const parsedValue = parseInt(cleanInput, 10);
 
-  if (parsedValue === currentProblem.solution) {
-    // ---- Correct Answer ----
+  if (!isNaN(parsedValue) && parsedValue === currentProblem.solution) {
+    // ---- Correct Answer: Inflate difficulty ----
     streakCounter += 1;
+    saveSessionState();
 
-    // Generate new inflated problem and reset to its allocated base timer
     generateInflatedProblem(streakCounter);
     timeLeft = currentProblem.allocatedTime;
 
     playSuccessChime();
     triggerStreakPop();
-    setStatus(`✓ Correct! +${currentProblem.allocatedTime}s Reset`, 'info');
+    setStatus(`✓ Correct! +${currentProblem.allocatedTime}s Reset (Tier ${currentProblem.tierLevel})`, 'info');
 
     dom.answerInput.value = '';
     dom.answerInput.focus();
@@ -574,7 +627,7 @@ function handleInputEvaluation(e) {
     renderActiveProblem();
     syncUI();
   } else {
-    // ---- Incorrect Answer ----
+    // ---- Incorrect Answer: 5s penalty, keep streak ----
     dom.answerInput.value = '';
     dom.answerInput.focus();
     transitionTo(GameStates.PENALTY);
@@ -582,29 +635,42 @@ function handleInputEvaluation(e) {
 }
 
 // =============================================================================
-// 13. Initialization (Strict Manifest V3 DOMContentLoaded)
+// 14. Initialization (Strict Manifest V3)
 // =============================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
   initDOMReferences();
   updateModeDisplay();
 
-  // Generate initial Tier 1 Warmup equation
-  generateInflatedProblem(streakCounter);
-  timeLeft = currentProblem.allocatedTime;
-  renderActiveProblem();
+  // Load persisted streak or start fresh
+  loadSessionState(() => {
+    generateInflatedProblem(streakCounter);
+    timeLeft = currentProblem.allocatedTime;
+    renderActiveProblem();
+    syncUI();
+    transitionTo(GameStates.ACTIVE);
+  });
 
-  transitionTo(GameStates.ACTIVE);
-
+  // Auto-focus input
   if (dom.answerInput) {
     dom.answerInput.focus();
   }
 
+  // Interactive Tier Badge Click Listener (Quick testing & manual override)
+  if (dom.tierBadge) {
+    dom.tierBadge.addEventListener('click', cycleDifficultyTier);
+  }
+
+  // Mode Toggle
   if (dom.modeToggleBtn) {
     dom.modeToggleBtn.addEventListener('click', toggleTargetMode);
   }
 
+  // Form Submit & Button Click
   if (dom.answerForm) {
     dom.answerForm.addEventListener('submit', handleInputEvaluation);
+  }
+  if (dom.submitBtn) {
+    dom.submitBtn.addEventListener('click', handleInputEvaluation);
   }
 });

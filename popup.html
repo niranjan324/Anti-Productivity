@@ -15,7 +15,7 @@
         <h1 class="brand-title">TAB EXECUTIONER</h1>
       </div>
       <div class="header-badges">
-        <span class="tier-badge tier-1" id="tier-badge" title="Adaptive Difficulty Tier">WARMUP</span>
+        <button type="button" class="tier-badge tier-1" id="tier-badge" title="Click to cycle difficulty tier (Warmup → Accelerated → High Stress → Algebra)">WARMUP ⚡</button>
         <div class="streak-pill" id="streak-badge" title="Continuous correct equations">
           <span class="streak-icon">🔥</span>
           <span class="streak-text">STREAK</span>
@@ -36,13 +36,13 @@
     <main class="stage-card" id="stage-card">
       <!-- High-Visibility Timer Section -->
       <section class="timer-section">
-        <span class="hud-label">TIME REMAINING</span>
+        <span class="hud-label" id="hud-timer-label">TIME REMAINING</span>
         <div class="timer-display" id="timer-display">20s</div>
       </section>
 
       <!-- Oversized Math Display -->
       <section class="equation-section">
-        <span class="hud-label">SOLVE TO KEEP TAB ALIVE</span>
+        <span class="hud-label" id="equation-sublabel">SOLVE TO KEEP TAB ALIVE</span>
         <div class="equation-display" id="problem-display">--</div>
       </section>
 
@@ -50,7 +50,7 @@
       <form class="input-form" id="answer-form">
         <div class="input-wrapper" id="input-wrapper">
           <input 
-            type="number" 
+            type="text" 
             id="answer-input" 
             class="answer-input" 
             placeholder="Type answer..." 

@@ -1,11 +1,12 @@
 {
   "manifest_version": 3,
   "name": "Anti-Procrastination Tab Executioner",
-  "version": "3.1.0",
+  "version": "3.1.1",
   "description": "Tests human alertness under a ticking countdown. Solve adaptive arithmetic problems to keep your active tab alive!",
   "permissions": [
     "tabs",
-    "activeTab"
+    "activeTab",
+    "storage"
   ],
   "action": {
     "default_popup": "popup.html",

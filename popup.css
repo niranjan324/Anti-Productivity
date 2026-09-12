@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Anti-Procrastination Tab Executioner - Stage-Ready Theme (v3.1.0)
+   Anti-Procrastination Tab Executioner - Stage-Ready Theme (v3.1.1)
    ========================================================================== */
 
 :root {
@@ -107,39 +107,50 @@ html, body {
   font-size: 9px;
   font-weight: 900;
   letter-spacing: 0.8px;
-  padding: 3px 7px;
+  padding: 4px 8px;
   border-radius: 4px;
   text-transform: uppercase;
   transition: all 0.25s ease;
   border: 1px solid transparent;
+  cursor: pointer;
+  background: transparent;
+  outline: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.tier-badge:hover {
+  filter: brightness(1.2);
+  transform: translateY(-1px);
 }
 
 /* Tier 1: Warmup */
 .tier-badge.tier-1 {
   color: #86efac;
-  background: rgba(34, 197, 94, 0.12);
-  border-color: rgba(34, 197, 94, 0.3);
+  background: rgba(34, 197, 94, 0.14);
+  border-color: rgba(34, 197, 94, 0.4);
 }
 
 /* Tier 2: Accelerated */
 .tier-badge.tier-2 {
   color: #fde047;
-  background: rgba(234, 179, 8, 0.15);
-  border-color: rgba(234, 179, 8, 0.4);
+  background: rgba(234, 179, 8, 0.18);
+  border-color: rgba(234, 179, 8, 0.5);
 }
 
 /* Tier 3: High Stress */
 .tier-badge.tier-3 {
   color: #fdba74;
-  background: rgba(249, 115, 22, 0.16);
-  border-color: rgba(249, 115, 22, 0.45);
+  background: rgba(249, 115, 22, 0.2);
+  border-color: rgba(249, 115, 22, 0.55);
 }
 
 /* Tier 4: Algebra Hazard (Pulsing Neon Violet) */
 .tier-badge.tier-4 {
   color: #d8b4fe;
-  background: rgba(168, 85, 247, 0.2);
-  border-color: rgba(168, 85, 247, 0.6);
+  background: rgba(168, 85, 247, 0.25);
+  border-color: rgba(168, 85, 247, 0.7);
   animation: hazard-glow 1.2s infinite alternate ease-in-out;
 }
 
@@ -149,8 +160,8 @@ html, body {
     border-color: rgba(168, 85, 247, 0.5);
   }
   100% {
-    box-shadow: 0 0 14px rgba(168, 85, 247, 0.8);
-    border-color: rgba(216, 180, 254, 0.9);
+    box-shadow: 0 0 14px rgba(168, 85, 247, 0.85);
+    border-color: rgba(216, 180, 254, 0.95);
   }
 }
 
@@ -165,9 +176,9 @@ html, body {
     filter: brightness(1);
   }
   50% {
-    transform: scale(1.3);
+    transform: scale(1.25);
     filter: brightness(1.6);
-    box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+    box-shadow: 0 0 18px rgba(255, 255, 255, 0.8);
   }
   100% {
     transform: scale(1);
@@ -330,12 +341,6 @@ html, body {
 .answer-input:focus {
   border-color: var(--accent-calm);
   box-shadow: 0 0 14px var(--accent-calm-glow);
-}
-
-.answer-input::-webkit-outer-spin-button,
-.answer-input::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
 }
 
 .submit-btn {
