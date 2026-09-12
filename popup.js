@@ -1,6 +1,6 @@
 /**
- * Anti-Procrastination Tab Executioner (v4.4.0)
- * Terminal Interceptor GUI Controller & Mandatory Zero-Redemption Liquidation Engine
+ * Anti-Procrastination Tab Executioner (v4.5.0)
+ * Terminal Interceptor GUI Controller & Camouflage Subversion Engine
  */
 
 // =============================================================================
@@ -200,7 +200,11 @@ function updateTierUI(tierLevel) {
 
 function renderActiveProblem() {
   if (!dom.problemDisplay) return;
-  dom.problemDisplay.textContent = currentProblem.displayString;
+  if (currentProblem.displayHtml) {
+    dom.problemDisplay.innerHTML = currentProblem.displayHtml;
+  } else {
+    dom.problemDisplay.textContent = currentProblem.displayString;
+  }
   updateTierUI(currentProblem.tierLevel);
 }
 
@@ -545,7 +549,18 @@ function populateShameScreen(title, domain) {
   if (dom.deceasedTabDomain) dom.deceasedTabDomain.textContent = domain;
 
   if (dom.lethalEquationRecap) {
-    dom.lethalEquationRecap.textContent = `${currentProblem.displayString.replace(/\n/g, ' ')} = ${currentProblem.solution}`;
+    if (currentProblem.isCamouflaged) {
+      const visibleClean = (currentProblem.visibleDisplay || currentProblem.displayString).replace(/\n/g, ' ');
+      dom.lethalEquationRecap.innerHTML = `
+        <div class="trap-reveal-row">
+          <div class="visible-part">Visible: ${visibleClean} = ${currentProblem.visibleSolution}</div>
+          <div class="actual-part">ACTUAL: ${visibleClean} <span class="phantom-revealed">[${currentProblem.phantomTerm} HIDDEN]</span> = ${currentProblem.solution}</div>
+          <div class="sabotage-badge">☣️ SABOTAGE PROTOCOL ACTIVATED // CAMOUFLAGE TRAP TRIGGERED</div>
+        </div>
+      `;
+    } else {
+      dom.lethalEquationRecap.textContent = `${currentProblem.displayString.replace(/\n/g, ' ')} = ${currentProblem.solution}`;
+    }
   }
 
   if (dom.userEntryRecap) {

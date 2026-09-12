@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Anti-Procrastination Tab Executioner",
-  "version": "4.4.0",
-  "description": "Tactical Cyberpunk Interceptor with Mandatory 7-Second Tab Liquidation and Zero-Redemption Auto-Purge!",
+  "version": "4.5.0",
+  "description": "Tactical Cyberpunk Interceptor with Camouflage Subversion Engine, Mandatory 7-Second Tab Liquidation and Zero-Redemption Auto-Purge!",
   "permissions": [
     "tabs",
     "activeTab",

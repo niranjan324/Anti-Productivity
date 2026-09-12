@@ -245,13 +245,69 @@ function generateTier5Problem() {
 }
 
 // =============================================================================
-// 4. Master Exponential Inflation Engine Generator
+// 4. Adversarial Camouflage Subversion Engine (The Phantom Operator)
+// =============================================================================
+
+/**
+ * Injects an adversarial camouflaged operator & term (10% stochastic probability on streak > 0)
+ * @param {{ displayString: string, solution: number, sublabel: string }} baseProblem
+ * @param {number} streak
+ */
+function applyPhantomCamouflage(baseProblem, streak) {
+  // Integrity safeguard: Never camouflage on streak 0 to ensure fundamental comprehension
+  const isCamouflaged = streak > 0 && Math.random() < 0.10;
+
+  if (!isCamouflaged) {
+    return {
+      displayString: baseProblem.displayString,
+      displayHtml: baseProblem.displayString,
+      visibleDisplay: baseProblem.displayString,
+      phantomTerm: '',
+      solution: baseProblem.solution,
+      visibleSolution: baseProblem.solution,
+      isCamouflaged: false,
+      sublabel: baseProblem.sublabel
+    };
+  }
+
+  // Generate an adversarial modifier: +K or -K (K in [2, 9])
+  const k = getRandomInt(2, 9);
+  let isAdd = Math.random() > 0.5;
+
+  // Safeguard: Ensure final solution strictly evaluates to a positive integer (> 0)
+  if (!isAdd && baseProblem.solution - k <= 0) {
+    isAdd = true;
+  }
+
+  const operator = isAdd ? '+' : '-';
+  const phantomTerm = `${operator} ${k}`;
+  const trueSolution = isAdd ? baseProblem.solution + k : baseProblem.solution - k;
+  const visibleDisplay = baseProblem.displayString;
+
+  // Wrap phantom term in dedicated span for CSS background camouflage
+  const displayHtml = `${visibleDisplay}<span class="phantom-term"> ${phantomTerm}</span>`;
+  const displayString = `${visibleDisplay} ${phantomTerm}`;
+
+  return {
+    displayString,
+    displayHtml,
+    visibleDisplay,
+    phantomTerm,
+    solution: trueSolution,
+    visibleSolution: baseProblem.solution,
+    isCamouflaged: true,
+    sublabel: baseProblem.sublabel
+  };
+}
+
+// =============================================================================
+// 5. Master Exponential Inflation Engine Generator
 // =============================================================================
 
 /**
  * Master Problem Generator: Dynamically scales difficulty and time allocation by streak.
  * @param {number} streak
- * @returns {{ displayString: string, solution: number, tierLevel: number, allocatedTime: number, sublabel: string, penaltySeconds: number }}
+ * @returns {{ displayString: string, displayHtml: string, visibleDisplay: string, phantomTerm: string, solution: number, visibleSolution: number, isCamouflaged: boolean, tierLevel: number, allocatedTime: number, sublabel: string, penaltySeconds: number }}
  */
 function generateExponentialProblem(streak) {
   let problemData;
@@ -274,13 +330,21 @@ function generateExponentialProblem(streak) {
     problemData = generateTier5Problem();
   }
 
+  // Apply Stochastic Camouflage Subversion Engine
+  const finalProblem = applyPhantomCamouflage(problemData, streak);
+
   const allocatedTime = calculateDecayedBaseTime(streak);
   const penaltySeconds = calculatePenaltySeconds(streak);
 
   return {
-    displayString: problemData.displayString,
-    solution: problemData.solution,
-    sublabel: problemData.sublabel,
+    displayString: finalProblem.displayString,
+    displayHtml: finalProblem.displayHtml,
+    visibleDisplay: finalProblem.visibleDisplay,
+    phantomTerm: finalProblem.phantomTerm,
+    solution: finalProblem.solution,
+    visibleSolution: finalProblem.visibleSolution,
+    isCamouflaged: finalProblem.isCamouflaged,
+    sublabel: finalProblem.sublabel,
     tierLevel,
     allocatedTime,
     penaltySeconds
@@ -295,3 +359,4 @@ if (typeof window !== 'undefined') {
     calculatePenaltySeconds
   };
 }
+

@@ -389,6 +389,19 @@ html, body {
   line-height: 1.3;
   letter-spacing: 0.05em;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+  user-select: none;
+}
+
+/* Phantom Operator / Camouflage Subversion Engine */
+.phantom-term {
+  color: rgba(30, 41, 59, 0.98); /* Blends with --surface-card */
+  opacity: 0.025; /* Microscopic 2.5% contrast easter egg */
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  pointer-events: none !important;
+  display: inline;
+  font-size: inherit;
+  font-family: inherit;
 }
 
 /* ==========================================================================
@@ -747,6 +760,51 @@ body.state-panic .terminal-container {
   font-size: 0.95rem;
   font-weight: 800;
   color: #ffffff;
+  line-height: 1.35;
+}
+
+.trap-reveal-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+}
+
+.visible-part {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  text-decoration: line-through;
+  opacity: 0.85;
+}
+
+.actual-part {
+  font-size: 0.82rem;
+  color: #ffffff;
+  font-weight: 900;
+}
+
+.phantom-revealed {
+  color: #ff2e54 !important;
+  background: rgba(255, 46, 84, 0.25);
+  border: 1px solid rgba(255, 46, 84, 0.75);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-weight: 900;
+  text-shadow: 0 0 10px rgba(255, 46, 84, 0.9);
+  animation: alertPulse 0.3s infinite alternate;
+}
+
+.sabotage-badge {
+  font-size: 0.52rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  color: #ff859c;
+  background: rgba(255, 46, 84, 0.2);
+  border: 1px solid #ff2e54;
+  padding: 2px 6px;
+  border-radius: 3px;
+  margin-top: 3px;
+  box-shadow: 0 0 8px rgba(255, 46, 84, 0.4);
 }
 
 .lethal-user-input {
