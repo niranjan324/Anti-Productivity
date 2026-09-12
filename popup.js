@@ -1,17 +1,17 @@
 /**
- * Anti-Procrastination Tab Executioner (v4.0.0)
- * Terminal Interceptor GUI Controller & Exponential Math Integration
+ * Anti-Procrastination Tab Executioner (v4.1.0)
+ * Terminal Interceptor GUI Controller & Post-Mortem Shame Screen Integration
  */
 
 // =============================================================================
-// 1. Constants & Configuration
+// 1. Constants & Mockery Database
 // =============================================================================
 const CONFIG = Object.freeze({
   COUNTDOWN_INTERVAL_MS: 1000,
   SHAKE_DURATION_MS: 300,
-  BUZZER_DURATION_MS: 400,
   EXECUTION_DELAY_MS: 300,
-  TIER_POP_DURATION_MS: 250
+  TIER_POP_DURATION_MS: 250,
+  LOCKOUT_SECONDS: 5
 });
 
 const TARGET_DOMAINS = [
@@ -22,6 +22,15 @@ const TARGET_DOMAINS = [
   'instagram.com',
   'twitch.tv',
   'netflix.com'
+];
+
+const MOCKERY_QUOTES = [
+  '“Your ancestors fought sabertooth tigers and you just lost to two-digit addition.”',
+  '“Closing tabs because you can’t close the mental gap.”',
+  '“Silicon wins again. Enjoy your clean browser.”',
+  '“Your focus died faster than this tab.”',
+  '“404: Cognitive capability not found.”',
+  '“Distraction eliminated. Dignity pending.”'
 ];
 
 let isDemoMode = true;
@@ -44,7 +53,8 @@ let streakCounter = 0;
 let currentTierLevel = 1;
 let timeLeft = 22;
 let countdownTimer = null;
-let audioCtx = null;
+let lockoutTimer = null;
+let lastEnteredValue = '[TIMEOUT]';
 let currentProblem = {
   displayString: '',
   solution: 0,
@@ -79,83 +89,30 @@ function initDOMReferences() {
     modeLabel: document.getElementById('mode-label'),
     inputWrapper: document.getElementById('input-wrapper'),
     answerForm: document.getElementById('answer-form'),
-    statusDot: document.getElementById('status-dot')
+    statusDot: document.getElementById('status-dot'),
+    
+    // Shame Screen Overlay Elements
+    shameOverlay: document.getElementById('shame-overlay'),
+    deceasedTabTitle: document.getElementById('deceased-tab-title'),
+    deceasedTabDomain: document.getElementById('deceased-tab-domain'),
+    lethalEquationRecap: document.getElementById('lethal-equation-recap'),
+    userEntryRecap: document.getElementById('user-entry-recap'),
+    shameStreakDisplay: document.getElementById('shame-streak-display'),
+    shameRatingDisplay: document.getElementById('shame-rating-display'),
+    shameQuoteDisplay: document.getElementById('shame-quote-display'),
+    lockoutTimerDisplay: document.getElementById('lockout-timer-display'),
+    shameRetryBtn: document.getElementById('shame-retry-btn')
   };
 }
 
 // =============================================================================
-// 5. Zero-Dependency Web Audio Synthesizer & Modulator
+// 5. Zero-Dependency Audio Feedback
 // =============================================================================
-
-function getAudioContext() {
-  if (!audioCtx) {
-    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-    audioCtx = new AudioContextClass();
-  }
-  if (audioCtx.state === 'suspended') {
-    audioCtx.resume();
-  }
-  return audioCtx;
-}
-
-/**
- * Psychoacoustic Stress Tone: Modulates frequency from 440Hz -> 1200Hz during critical countdown
- */
-function playUrgencyTone(remainingTime) {
-  if (remainingTime > 6 || remainingTime <= 0) return;
-
-  try {
-    const ctx = getAudioContext();
-    const now = ctx.currentTime;
-    const osc = ctx.createOscillator();
-    const gainNode = ctx.createGain();
-
-    const urgencyRatio = Math.max(0, Math.min(1, (6 - remainingTime) / 5));
-    const frequency = 440 + (urgencyRatio * 760); // 440Hz -> 1200Hz
-
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(frequency, now);
-
-    gainNode.gain.setValueAtTime(0.08, now);
-    gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-
-    osc.connect(gainNode);
-    gainNode.connect(ctx.destination);
-
-    osc.start(now);
-    osc.stop(now + 0.12);
-  } catch (err) {
-    // Non-critical audio warning
-  }
-}
-
-function playBuzzerSound() {
-  try {
-    const ctx = getAudioContext();
-    const now = ctx.currentTime;
-    const durationSec = CONFIG.BUZZER_DURATION_MS / 1000;
-
-    const osc = ctx.createOscillator();
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(880, now);
-
-    const gainNode = ctx.createGain();
-    gainNode.gain.setValueAtTime(0.25, now);
-    gainNode.gain.exponentialRampToValueAtTime(0.001, now + durationSec);
-
-    osc.connect(gainNode);
-    gainNode.connect(ctx.destination);
-
-    osc.start(now);
-    osc.stop(now + durationSec);
-  } catch (err) {
-    console.error('Audio synthesizer error:', err);
-  }
-}
 
 function playSuccessChime() {
   try {
-    const ctx = getAudioContext();
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    const ctx = new AudioContextClass();
     const now = ctx.currentTime;
     const osc = ctx.createOscillator();
     const gainNode = ctx.createGain();
@@ -184,9 +141,7 @@ function playSuccessChime() {
 function generateAndRenderProblem(streak) {
   currentProblem = window.MathEngine.generateExponentialProblem(streak);
 
-  // Format matrices cleanly with brackets if applicable
   if (currentProblem.tierLevel === 5 && currentProblem.displayString.includes('det |')) {
-    // Matrix format: [ a  b ] / [ c  d ]
     const lines = currentProblem.displayString.split('\n');
     if (lines.length >= 2) {
       const line1 = lines[0].replace('det |', '[').replace('|', ']');
@@ -266,30 +221,24 @@ function cycleDifficultyTier() {
 function syncUI() {
   if (!dom.timerDisplay || !dom.body) return;
 
-  // 1. Digital Countdown Readout
   dom.timerDisplay.textContent = `${Math.max(0, timeLeft)}s`;
 
-  // 2. Smooth Depleting Progress Bar
   if (dom.progressFill && currentProblem.allocatedTime > 0) {
     const percent = Math.max(0, Math.min(100, (timeLeft / currentProblem.allocatedTime) * 100));
     dom.progressFill.style.width = `${percent}%`;
   }
 
-  // 3. Formatted Streak Pill (e.g. "07")
   if (dom.streakDisplay) {
     dom.streakDisplay.textContent = String(streakCounter).padStart(2, '0');
   }
 
-  // 4. Dynamic Stress Classes (Warning <= 8s, Panic <= 4s)
   dom.body.classList.remove('state-warning', 'state-panic', 'state-failed');
 
   if (currentState === GameStates.FAILED || timeLeft <= 0) {
     dom.body.classList.add('state-failed');
   } else if (timeLeft <= 4) {
-    // Critical Threat State: <= 4 seconds
     dom.body.classList.add('state-panic');
   } else if (timeLeft <= 8) {
-    // Warning State: <= 8 seconds
     dom.body.classList.add('state-warning');
   }
 }
@@ -312,16 +261,8 @@ function toggleTargetMode() {
 function updateModeDisplay() {
   if (isDemoMode) {
     if (dom.modeLabel) dom.modeLabel.textContent = 'ALL TABS';
-    if (dom.targetIndicator) {
-      dom.targetIndicator.textContent = 'TARGET: ALL ACTIVE TABS';
-      dom.targetIndicator.style.color = 'var(--accent-cyan)';
-    }
   } else {
     if (dom.modeLabel) dom.modeLabel.textContent = 'SOCIAL ONLY';
-    if (dom.targetIndicator) {
-      dom.targetIndicator.textContent = 'TARGET: DISTRACTIONS ONLY';
-      dom.targetIndicator.style.color = '#a78bfa';
-    }
   }
 }
 
@@ -369,11 +310,6 @@ function startTimerLoop() {
     }
 
     timeLeft -= 1;
-
-    // Psychoacoustic frequency ramp under 6 seconds
-    if (timeLeft <= 6 && timeLeft > 0) {
-      playUrgencyTone(timeLeft);
-    }
 
     if (timeLeft <= 0) {
       timeLeft = 0;
@@ -434,9 +370,8 @@ function transitionTo(nextState) {
 
     case GameStates.FAILED:
       stopTimerLoop();
-      resetSessionState();
       syncUI();
-      onTimerExpired();
+      handleExecutionAndShameScreen();
       break;
   }
 }
@@ -446,7 +381,7 @@ function triggerErrorShake() {
   if (!targetEl) return;
 
   targetEl.classList.remove('error-shake');
-  void targetEl.offsetWidth; // Force reflow
+  void targetEl.offsetWidth;
   targetEl.classList.add('error-shake');
 
   setTimeout(() => {
@@ -466,7 +401,7 @@ function triggerStreakPop() {
 }
 
 // =============================================================================
-// 12. Tab Termination & Safety Guards
+// 12. Post-Mortem Shame Screen & Harassment Sequence (Milestone 5.1)
 // =============================================================================
 
 function isProtectedUrl(url) {
@@ -486,47 +421,169 @@ function isTargetDistraction(url) {
   }
 }
 
-function onTimerExpired() {
-  stopTimerLoop();
-  playBuzzerSound();
+function calculateHumiliationRating(streak) {
+  if (streak <= 2) return 'SINGLE-CELL ATTENTION';
+  if (streak <= 6) return 'DISTRACTED AMATEUR';
+  return 'ALMOST HUMAN';
+}
 
+/**
+ * Orchestrates the full post-mortem failure sequence:
+ * 1. Capture target tab details.
+ * 2. Close active tab via Chrome API.
+ * 3. Start 5-second acoustic harassment siren.
+ * 4. Render Shame Overlay with obituary, fatal recap, and lockout timer.
+ */
+function handleExecutionAndShameScreen() {
   if (dom.answerInput) dom.answerInput.disabled = true;
   if (dom.submitBtn) dom.submitBtn.disabled = true;
-  if (dom.problemDisplay) dom.problemDisplay.textContent = 'TAB EXECUTED';
 
-  setStatus('🚨 TERMINATING ACTIVE TAB...', 'alert');
+  // 1. Query target tab immediately
+  if (typeof chrome !== 'undefined' && chrome.tabs) {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      let deceasedTitle = 'Distracting Browser Tab';
+      let deceasedDomain = 'web.page';
+      let targetTabId = null;
+      let shouldTerminate = true;
 
-  if (typeof chrome === 'undefined' || !chrome.tabs) {
-    setStatus('⚠️ Chrome Tabs API unavailable in test environment.', 'warn');
-    return;
+      if (tabs && tabs.length > 0 && tabs[0]) {
+        const activeTab = tabs[0];
+        targetTabId = activeTab.id;
+        deceasedTitle = activeTab.title || 'Untitled Tab';
+
+        try {
+          deceasedDomain = new URL(activeTab.url).hostname || activeTab.url;
+        } catch {
+          deceasedDomain = activeTab.url || 'browser-tab';
+        }
+
+        if (isProtectedUrl(activeTab.url)) {
+          shouldTerminate = false;
+        } else if (!isDemoMode && !isTargetDistraction(activeTab.url)) {
+          shouldTerminate = false;
+        }
+      }
+
+      // Populate Shame Screen DOM
+      populateShameScreen(deceasedTitle, deceasedDomain);
+
+      // Trigger Tab Closure after slight delay
+      if (shouldTerminate && targetTabId) {
+        setTimeout(() => {
+          chrome.tabs.remove(targetTabId, () => {
+            if (chrome.runtime && chrome.runtime.lastError) {
+              console.warn('Tab termination notice:', chrome.runtime.lastError.message);
+            }
+          });
+        }, CONFIG.EXECUTION_DELAY_MS);
+      }
+    });
+  } else {
+    populateShameScreen('Test Browser Tab', 'example.com');
   }
 
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    if (!tabs || tabs.length === 0 || !tabs[0]) {
-      setStatus('⚠️ No active tab detected to terminate.', 'warn');
-      return;
+  // 2. Start 5-second multi-oscillator harassment siren
+  if (window.AudioHarassment) {
+    window.AudioHarassment.startAcousticHarassmentSiren();
+  }
+
+  // 3. Show Shame Screen Overlay
+  if (dom.shameOverlay) {
+    dom.shameOverlay.classList.remove('hidden');
+  }
+
+  // 4. Start 5-second unskippable lockout countdown
+  startLockoutCountdown();
+}
+
+function populateShameScreen(title, domain) {
+  if (dom.deceasedTabTitle) dom.deceasedTabTitle.textContent = title;
+  if (dom.deceasedTabDomain) dom.deceasedTabDomain.textContent = domain;
+
+  if (dom.lethalEquationRecap) {
+    dom.lethalEquationRecap.textContent = `${currentProblem.displayString.replace(/\n/g, ' ')} = ${currentProblem.solution}`;
+  }
+
+  if (dom.userEntryRecap) {
+    dom.userEntryRecap.textContent = `YOU ENTERED: ${lastEnteredValue}`;
+  }
+
+  if (dom.shameStreakDisplay) {
+    dom.shameStreakDisplay.textContent = `${streakCounter} STREAK`;
+  }
+
+  if (dom.shameRatingDisplay) {
+    dom.shameRatingDisplay.textContent = calculateHumiliationRating(streakCounter);
+  }
+
+  if (dom.shameQuoteDisplay) {
+    const randomQuote = MOCKERY_QUOTES[Math.floor(Math.random() * MOCKERY_QUOTES.length)];
+    dom.shameQuoteDisplay.textContent = randomQuote;
+  }
+}
+
+function startLockoutCountdown() {
+  let lockoutSeconds = CONFIG.LOCKOUT_SECONDS;
+
+  if (dom.lockoutTimerDisplay) {
+    dom.lockoutTimerDisplay.classList.remove('hidden');
+    dom.lockoutTimerDisplay.textContent = `SYSTEM LOCKED: 0${lockoutSeconds}s`;
+  }
+
+  if (dom.shameRetryBtn) {
+    dom.shameRetryBtn.classList.add('hidden');
+  }
+
+  clearInterval(lockoutTimer);
+  lockoutTimer = setInterval(() => {
+    lockoutSeconds -= 1;
+
+    if (lockoutSeconds <= 0) {
+      clearInterval(lockoutTimer);
+      if (dom.lockoutTimerDisplay) dom.lockoutTimerDisplay.classList.add('hidden');
+      if (dom.shameRetryBtn) dom.shameRetryBtn.classList.remove('hidden');
+
+      if (window.AudioHarassment) {
+        window.AudioHarassment.stopAcousticHarassmentSiren();
+      }
+    } else {
+      if (dom.lockoutTimerDisplay) {
+        dom.lockoutTimerDisplay.textContent = `SYSTEM LOCKED: 0${lockoutSeconds}s`;
+      }
     }
+  }, 1000);
+}
 
-    const activeTab = tabs[0];
+/**
+ * Resets the session after the user confesses and clicks retry
+ */
+function handleShameReset() {
+  if (window.AudioHarassment) {
+    window.AudioHarassment.stopAcousticHarassmentSiren();
+  }
 
-    if (isProtectedUrl(activeTab.url)) {
-      setStatus('Protected System Tab Detected: Cannot Terminate', 'warn');
-      return;
-    }
+  if (dom.shameOverlay) {
+    dom.shameOverlay.classList.add('hidden');
+  }
 
-    if (!isDemoMode && !isTargetDistraction(activeTab.url)) {
-      setStatus('Non-distracting tab spared. Get back to work.', 'info');
-      return;
-    }
+  resetSessionState();
+  lastEnteredValue = '[TIMEOUT]';
 
-    setTimeout(() => {
-      chrome.tabs.remove(activeTab.id, () => {
-        if (chrome.runtime && chrome.runtime.lastError) {
-          console.warn('Tab removal note:', chrome.runtime.lastError.message);
-        }
-      });
-    }, CONFIG.EXECUTION_DELAY_MS);
-  });
+  if (dom.answerInput) {
+    dom.answerInput.disabled = false;
+    dom.answerInput.value = '';
+    dom.answerInput.focus();
+  }
+  if (dom.submitBtn) {
+    dom.submitBtn.disabled = false;
+  }
+
+  generateAndRenderProblem(0);
+  timeLeft = currentProblem.allocatedTime;
+  syncUI();
+
+  transitionTo(GameStates.ACTIVE);
+  setStatus('SYSTEM RE-ARMED // TIER 1 WARMUP', 'info');
 }
 
 // =============================================================================
@@ -543,7 +600,8 @@ function handleInputEvaluation(e) {
 
   if (rawInput === '') return;
 
-  // Clean parse: handles negative numbers, "x=10", "10", hex/binary
+  lastEnteredValue = rawInput;
+
   const cleanInput = rawInput.replace(/[^0-9\-]/g, '');
   const parsedValue = parseInt(cleanInput, 10);
 
@@ -572,7 +630,7 @@ function handleInputEvaluation(e) {
 }
 
 // =============================================================================
-// 14. Initialization (Strict Manifest V3 DOMContentLoaded)
+// 14. Initialization (Strict Manifest V3)
 // =============================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -603,5 +661,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   if (dom.submitBtn) {
     dom.submitBtn.addEventListener('click', handleInputEvaluation);
+  }
+
+  if (dom.shameRetryBtn) {
+    dom.shameRetryBtn.addEventListener('click', handleShameReset);
   }
 });

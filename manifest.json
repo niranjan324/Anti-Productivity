@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Anti-Procrastination Tab Executioner",
-  "version": "4.0.0",
-  "description": "Tactical Cyberpunk Interceptor: Solve exponential cognitive math challenges to keep active browser tabs alive!",
+  "version": "4.1.0",
+  "description": "Tactical Cyberpunk Interceptor with Post-Mortem Shame HUD and Extended Acoustic Harassment Engine!",
   "permissions": [
     "tabs",
     "activeTab",

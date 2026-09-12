@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Anti-Procrastination Tab Executioner - Terminal Interceptor Theme (v4.0.0)
+   Anti-Procrastination Tab Executioner - Terminal Interceptor Theme (v4.1.0)
    Strict Viewport Geometry: 360px × 500px (Zero Scrollbar Guaranteed)
    ========================================================================== */
 
@@ -55,6 +55,10 @@ html, body {
   user-select: none;
   position: relative;
   transition: background 0.3s ease;
+}
+
+.hidden {
+  display: none !important;
 }
 
 /* Faint Scanline Overlay */
@@ -210,7 +214,6 @@ html, body {
   transform: translateY(-1px);
 }
 
-/* Tier Specific Themes */
 .tier-ribbon.tier-1 {
   color: #6ee7b7;
   background: rgba(16, 185, 129, 0.12);
@@ -247,14 +250,8 @@ html, body {
 }
 
 @keyframes apexStrobe {
-  0% {
-    box-shadow: 0 0 6px rgba(255, 46, 84, 0.4);
-    border-color: rgba(255, 46, 84, 0.6);
-  }
-  100% {
-    box-shadow: 0 0 16px rgba(255, 46, 84, 0.95), inset 0 0 6px rgba(255, 46, 84, 0.5);
-    border-color: #ff5c7c;
-  }
+  0%   { box-shadow: 0 0 6px rgba(255, 46, 84, 0.4); border-color: rgba(255, 46, 84, 0.6); }
+  100% { box-shadow: 0 0 16px rgba(255, 46, 84, 0.95), inset 0 0 6px rgba(255, 46, 84, 0.5); border-color: #ff5c7c; }
 }
 
 .tier-pop {
@@ -262,8 +259,8 @@ html, body {
 }
 
 @keyframes tierPop {
-  0% { transform: scale(1); filter: brightness(1); }
-  50% { transform: scale(1.15); filter: brightness(1.6); }
+  0%   { transform: scale(1); filter: brightness(1); }
+  50%  { transform: scale(1.15); filter: brightness(1.6); }
   100% { transform: scale(1); filter: brightness(1); }
 }
 
@@ -353,7 +350,6 @@ html, body {
   transition: border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
-/* Tactical Corner Brackets */
 .card-corner {
   position: absolute;
   width: 6px;
@@ -405,9 +401,7 @@ html, body {
   justify-content: space-between;
 }
 
-.deck-form {
-  width: 100%;
-}
+.deck-form { width: 100%; }
 
 .input-row {
   display: flex;
@@ -459,13 +453,8 @@ html, body {
   transition: filter 0.2s ease, transform 0.1s ease, background 0.2s ease;
 }
 
-.submit-action-btn:hover {
-  filter: brightness(1.15);
-}
-
-.submit-action-btn:active {
-  transform: scale(0.96);
-}
+.submit-action-btn:hover { filter: brightness(1.15); }
+.submit-action-btn:active { transform: scale(0.96); }
 
 .status-deck {
   display: flex;
@@ -501,10 +490,10 @@ html, body {
 }
 
 /* ==========================================================================
-   DYNAMIC STRESS ANIMATIONS & PSYCHOACOUSTIC STROBE
+   DYNAMIC STRESS ANIMATIONS
    ========================================================================== */
 
-/* State: Warning (Timer <= 8s) */
+/* Warning (Timer <= 8s) */
 body.state-warning .timer-digits {
   color: var(--accent-amber);
   text-shadow: 0 0 16px var(--accent-amber-glow);
@@ -530,7 +519,7 @@ body.state-warning .math-card {
   100% { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 0 18px rgba(245, 158, 11, 0.6); }
 }
 
-/* State: Critical Threat (Timer <= 4s) */
+/* Critical Threat (Timer <= 4s) */
 body.state-panic {
   background-color: #140508;
 }
@@ -578,7 +567,7 @@ body.state-panic .terminal-container {
   100% { transform: translate(0, 0); }
 }
 
-/* Smooth Error Shake (300ms) */
+/* Error Shake (300ms) */
 .error-shake {
   animation: errorShake 0.3s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
@@ -594,13 +583,270 @@ body.state-panic .terminal-container {
   box-shadow: 0 0 14px var(--accent-crimson-glow) !important;
 }
 
-/* State: Executed / Tab Terminated */
-body.state-failed .math-card {
-  border-color: var(--accent-crimson);
-  background: #180307;
-  box-shadow: 0 0 28px rgba(255, 46, 84, 0.8);
+/* ==========================================================================
+   FULL-SCREEN POST-MORTEM SHAME SCREEN OVERLAY
+   ========================================================================== */
+.shame-overlay {
+  position: absolute;
+  inset: 0;
+  width: 360px;
+  height: 500px;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-sizing: border-box;
+  background-color: #140407;
+  animation: shameStrobe 1.4s infinite alternate ease-in-out;
+  overflow: hidden;
 }
 
-body.state-failed .timer-digits {
-  color: var(--accent-crimson);
+@keyframes shameStrobe {
+  0%   { background-color: #120306; }
+  100% { background-color: #24070c; }
+}
+
+/* Top and Bottom Diagonal Hazard Bar */
+.hazard-stripe {
+  height: 8px;
+  width: 100%;
+  background: repeating-linear-gradient(
+    45deg,
+    #ef4444,
+    #ef4444 10px,
+    #7f1d1d 10px,
+    #7f1d1d 20px
+  );
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+}
+
+.shame-content {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  gap: 8px;
+  box-sizing: border-box;
+}
+
+.shame-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 2px;
+}
+
+.shame-alert-badge {
+  font-size: 0.6rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  color: #ff859c;
+  background: rgba(255, 46, 84, 0.2);
+  border: 1px solid rgba(255, 46, 84, 0.4);
+  padding: 2px 8px;
+  border-radius: 3px;
+}
+
+.shame-title {
+  font-family: var(--font-mono);
+  font-size: 1.15rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: #ff2e54;
+  text-shadow: 0 0 12px rgba(255, 46, 84, 0.8);
+  margin-top: 2px;
+}
+
+/* Glitch Typography */
+.glitch-text {
+  position: relative;
+  animation: textGlitch 2s infinite linear alternate-reverse;
+}
+
+@keyframes textGlitch {
+  0%   { text-shadow: -1px -1px 0 #06b6d4, 1px 1px 0 #ff2e54; }
+  25%  { text-shadow: -2px 1px 0 #06b6d4, 2px -1px 0 #ff2e54; }
+  50%  { text-shadow: 1px -2px 0 #06b6d4, -1px 2px 0 #ff2e54; }
+  75%  { text-shadow: -2px -1px 0 #06b6d4, 1px 1px 0 #ff2e54; }
+  100% { text-shadow: -1px 1px 0 #06b6d4, 1px -1px 0 #ff2e54; }
+}
+
+.shame-subtitle {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
+
+/* Tab Obituary Card */
+.obituary-card {
+  background: rgba(20, 10, 16, 0.8);
+  border: 1px solid rgba(255, 46, 84, 0.3);
+  border-radius: 8px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+}
+
+.obituary-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tombstone-icon { font-size: 0.75rem; }
+.obituary-label {
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #ff859c;
+}
+
+.deceased-title {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.deceased-domain {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--accent-cyan);
+}
+
+/* Lethal Problem Recap */
+.lethal-recap-box {
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px dashed rgba(255, 46, 84, 0.4);
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 2px;
+}
+
+.recap-label {
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.lethal-equation {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.lethal-user-input {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #ff859c;
+}
+
+/* Humiliation Metrics Grid */
+.humiliation-grid {
+  display: flex;
+  gap: 8px;
+}
+
+.metric-cell {
+  flex: 1;
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.cell-label {
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
+
+.cell-val {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 900;
+  color: #ffffff;
+}
+
+.rating-val {
+  color: #fbbf24;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+/* Sarcastic Mockery Quote */
+.mockery-quote {
+  font-size: 0.65rem;
+  font-weight: 700;
+  font-style: italic;
+  line-height: 1.35;
+  color: #fca5a5;
+  text-align: center;
+  padding: 4px 6px;
+  border-left: 2px solid #ef4444;
+  background: rgba(239, 68, 68, 0.08);
+  border-radius: 0 4px 4px 0;
+}
+
+/* Lockout Controls & Reset */
+.lockout-control-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.lockout-timer {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  color: #ff2e54;
+  animation: alertPulse 0.3s infinite alternate;
+}
+
+.retry-action-btn {
+  width: 100%;
+  background: #ff2e54;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  box-shadow: 0 0 16px rgba(255, 46, 84, 0.7);
+  transition: transform 0.1s ease, filter 0.2s ease, background 0.2s ease;
+}
+
+.retry-action-btn:hover {
+  filter: brightness(1.15);
+  background: #ff476a;
+}
+
+.retry-action-btn:active {
+  transform: scale(0.97);
 }

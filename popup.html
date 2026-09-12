@@ -86,7 +86,68 @@
 
   </div>
 
+  <!-- FULL-SCREEN POST-MORTEM SHAME SCREEN OVERLAY -->
+  <div class="shame-overlay hidden" id="shame-overlay">
+    <!-- Hazard Warning Stripe (Top) -->
+    <div class="hazard-stripe"></div>
+
+    <div class="shame-content">
+      <!-- Glitch Title Headline -->
+      <div class="shame-header">
+        <span class="shame-alert-badge">CRITICAL OVERLOAD</span>
+        <h2 class="shame-title glitch-text" data-text="SESSION TERMINATED">SESSION TERMINATED</h2>
+        <span class="shame-subtitle">HUMAN ALERTNESS EXPIRED</span>
+      </div>
+
+      <!-- Tab Obituary Card -->
+      <div class="obituary-card">
+        <div class="obituary-header">
+          <span class="tombstone-icon">⚰️</span>
+          <span class="obituary-label">TAB EXECUTION REPORT</span>
+        </div>
+        <div class="deceased-title" id="deceased-tab-title">Distracting Tab</div>
+        <div class="deceased-domain" id="deceased-tab-domain">youtube.com</div>
+      </div>
+
+      <!-- Fatal Equation Recap -->
+      <div class="lethal-recap-box">
+        <div class="recap-label">FATAL COGNITIVE CHALLENGE:</div>
+        <div class="lethal-equation" id="lethal-equation-recap">14 × 7 = 98</div>
+        <div class="lethal-user-input" id="user-entry-recap">YOU ENTERED: [TIMEOUT]</div>
+      </div>
+
+      <!-- Humiliation Metrics -->
+      <div class="humiliation-grid">
+        <div class="metric-cell">
+          <span class="cell-label">SURVIVED</span>
+          <span class="cell-val" id="shame-streak-display">0 STREAK</span>
+        </div>
+        <div class="metric-cell">
+          <span class="cell-label">RATING</span>
+          <span class="cell-val rating-val" id="shame-rating-display">SINGLE-CELL</span>
+        </div>
+      </div>
+
+      <!-- Sarcastic Mockery Quote -->
+      <div class="mockery-quote" id="shame-quote-display">
+        "Your ancestors fought sabertooth tigers and you just lost to two-digit addition."
+      </div>
+
+      <!-- Unskippable Lockout / Restart Controls -->
+      <div class="lockout-control-area">
+        <div class="lockout-timer" id="lockout-timer-display">SYSTEM LOCKED: 05s</div>
+        <button type="button" class="retry-action-btn hidden" id="shame-retry-btn">
+          CONFESS &amp; TRY AGAIN
+        </button>
+      </div>
+    </div>
+
+    <!-- Hazard Warning Stripe (Bottom) -->
+    <div class="hazard-stripe"></div>
+  </div>
+
   <script src="math-engine.js"></script>
+  <script src="audio-harassment.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>
