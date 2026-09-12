@@ -1,6 +1,6 @@
 /* ==========================================================================
-   Anti-Procrastination Tab Executioner - Terminal Interceptor Theme (v4.2.0)
-   Strict Viewport Geometry: 360px × 500px (Zero Scrollbar Guaranteed)
+   Anti-Procrastination Tab Executioner - Terminal Interceptor Theme (v4.3.0)
+   Dedicated Panel Viewport: Strict 360px x 500px Viewport Normalization
    ========================================================================== */
 
 :root {
@@ -43,10 +43,10 @@
 }
 
 html, body {
-  width: 360px;
-  height: 500px;
-  max-width: 360px;
-  max-height: 500px;
+  width: 100%;
+  height: 100%;
+  min-width: 360px;
+  min-height: 500px;
   overflow: hidden;
   background: var(--bg-void);
   background-image: var(--bg-radial);
@@ -79,10 +79,10 @@ html, body {
   );
 }
 
-/* Single Vertical Flexbox Container (360x500px) */
+/* Single Vertical Flexbox Container */
 .terminal-container {
-  width: 360px;
-  height: 500px;
+  width: 100%;
+  height: 100%;
   padding: 16px;
   display: flex;
   flex-direction: column;
@@ -589,8 +589,8 @@ body.state-panic .terminal-container {
 .shame-overlay {
   position: absolute;
   inset: 0;
-  width: 360px;
-  height: 500px;
+  width: 100%;
+  height: 100%;
   z-index: 200;
   display: flex;
   flex-direction: column;

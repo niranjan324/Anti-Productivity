@@ -1,6 +1,6 @@
 /**
- * Anti-Procrastination Tab Executioner (v4.2.0)
- * Terminal Interceptor GUI Controller & Post-Mortem Shame Screen Integration
+ * Anti-Procrastination Tab Executioner (v4.3.0)
+ * Terminal Interceptor GUI Controller & Dedicated Panel Focus Trap
  */
 
 // =============================================================================
@@ -11,7 +11,8 @@ const CONFIG = Object.freeze({
   SHAKE_DURATION_MS: 300,
   EXECUTION_DELAY_MS: 300,
   TIER_POP_DURATION_MS: 250,
-  LOCKOUT_SECONDS: 7
+  LOCKOUT_SECONDS: 7,
+  ESCAPE_PENALTY_SECONDS: 4
 });
 
 const TARGET_DOMAINS = [
@@ -75,6 +76,7 @@ let dom = {};
 function initDOMReferences() {
   dom = {
     body: document.body,
+    mainContainer: document.getElementById('main-container'),
     timerDisplay: document.getElementById('timer-display'),
     progressFill: document.getElementById('progress-fill'),
     problemDisplay: document.getElementById('problem-display'),
@@ -345,12 +347,22 @@ function transitionTo(nextState) {
       currentTierLevel = 1;
       timeLeft = currentProblem.allocatedTime || 22;
       syncUI();
+      if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+        chrome.runtime.sendMessage({ type: 'UPDATE_SESSION_STATUS', active: false });
+      }
       break;
 
     case GameStates.ACTIVE:
       startTimerLoop();
       syncUI();
       if (dom.answerInput) dom.answerInput.focus();
+      if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+        chrome.runtime.sendMessage({
+          type: 'UPDATE_SESSION_STATUS',
+          active: true,
+          targetTabId: pendingTargetTabId
+        });
+      }
       break;
 
     case GameStates.PENALTY: {
@@ -374,8 +386,40 @@ function transitionTo(nextState) {
     case GameStates.FAILED:
       stopTimerLoop();
       syncUI();
+      if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+        chrome.runtime.sendMessage({ type: 'UPDATE_SESSION_STATUS', active: true });
+      }
       handleExecutionAndShameScreen();
       break;
+  }
+}
+
+/**
+ * Handles attempted user evasion / window blur during active countdown
+ */
+function handleEscapeAttempt() {
+  if (currentState !== GameStates.ACTIVE || isLockoutActive) return;
+
+  const penalty = CONFIG.ESCAPE_PENALTY_SECONDS || 4;
+  timeLeft = Math.max(0, timeLeft - penalty);
+  syncUI();
+
+  setStatus(`ATTEMPTED ESCAPE DETECTED // -${penalty}s PENALTY APPLIED`, 'alert');
+  triggerErrorShake();
+
+  // Dispatch immediate re-focus request to background service worker
+  if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+    chrome.runtime.sendMessage({ type: 'REFOCUS_WINDOW' }, () => {
+      if (chrome.runtime.lastError) {
+        // Ignore
+      }
+    });
+  }
+
+  if (timeLeft <= 0) {
+    timeLeft = 0;
+    syncUI();
+    transitionTo(GameStates.FAILED);
   }
 }
 
@@ -582,7 +626,9 @@ function handleShameReset() {
   }
 
   // Execute the deferred tab termination now that the full 7s shame sequence has completed
-  if (pendingShouldTerminate && pendingTargetTabId && typeof chrome !== 'undefined' && chrome.tabs) {
+  if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+    chrome.runtime.sendMessage({ type: 'TERMINATE_TARGET_TAB' });
+  } else if (pendingShouldTerminate && pendingTargetTabId && typeof chrome !== 'undefined' && chrome.tabs) {
     const tabToKill = pendingTargetTabId;
     pendingTargetTabId = null;
     pendingShouldTerminate = false;
@@ -668,6 +714,16 @@ document.addEventListener('DOMContentLoaded', () => {
   initDOMReferences();
   updateModeDisplay();
 
+  // Retrieve initial target tab info if launched via background window controller
+  if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+    chrome.runtime.sendMessage({ type: 'GET_TARGET_TAB' }, (res) => {
+      if (res && res.targetTabId) {
+        pendingTargetTabId = res.targetTabId;
+        pendingShouldTerminate = true;
+      }
+    });
+  }
+
   loadSessionState(() => {
     generateAndRenderProblem(streakCounter);
     timeLeft = currentProblem.allocatedTime;
@@ -698,13 +754,49 @@ document.addEventListener('DOMContentLoaded', () => {
     dom.shameRetryBtn.addEventListener('click', handleShameReset);
   }
 
-  // Keyboard shortcut suppression during punishment lockout
+  // Pointer Capture & Full-Window Shield
+  if (dom.mainContainer) {
+    dom.mainContainer.addEventListener('pointerdown', (e) => {
+      try {
+        if (dom.mainContainer.setPointerCapture) {
+          dom.mainContainer.setPointerCapture(e.pointerId);
+        }
+      } catch (err) {
+        // Ignore
+      }
+    });
+  }
+
+  // Right-click context menu suppression
+  window.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+  });
+
+  // Aggressive Window Blur Trapping (Defiance Evasion Penalty)
+  window.addEventListener('blur', () => {
+    handleEscapeAttempt();
+  });
+
+  // Keyboard shortcut suppression and escape interception
   window.addEventListener('keydown', (e) => {
     if (isLockoutActive) {
       if (['Enter', ' ', 'Escape', 'Tab'].includes(e.key) || e.code === 'Space' || e.code === 'Enter') {
         e.preventDefault();
         e.stopPropagation();
+        return;
       }
+    }
+
+    // Intercept escape combinations (Ctrl+W, Ctrl+R, F5, F12)
+    const isEscapeKey =
+      (e.ctrlKey || e.metaKey) && ['w', 'W', 'r', 'R', 'q', 'Q'].includes(e.key) ||
+      e.key === 'F5' ||
+      e.key === 'F12';
+
+    if (isEscapeKey && currentState === GameStates.ACTIVE) {
+      e.preventDefault();
+      e.stopPropagation();
+      handleEscapeAttempt();
     }
   }, true);
 });
