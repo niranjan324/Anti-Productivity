@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Anti-Procrastination Tab Executioner - Stage-Ready Theme (v3.1.1)
+   Anti-Procrastination Tab Executioner - Exponential Inflation Theme (v3.2.0)
    ========================================================================== */
 
 :root {
@@ -15,20 +15,21 @@
   --text-muted: #64748b;
   
   /* State Accent Palette */
-  --accent-calm: #22c55e;        /* Electric Green */
-  --accent-calm-glow: rgba(34, 197, 94, 0.35);
+  --accent-calm: #10b981;        /* Emerald / Neon Green */
+  --accent-calm-glow: rgba(16, 185, 129, 0.35);
   
-  --accent-warning: #eab308;     /* Vivid Amber */
-  --accent-warning-glow: rgba(234, 179, 8, 0.45);
+  --accent-warning: #f59e0b;     /* Vivid Amber */
+  --accent-warning-glow: rgba(245, 158, 11, 0.45);
   
   --accent-panic: #ef4444;       /* Neon Danger Red */
-  --accent-panic-glow: rgba(239, 68, 68, 0.7);
+  --accent-panic-glow: rgba(239, 68, 68, 0.85);
 
   /* Tier Colors */
-  --tier-1-color: #22c55e;
-  --tier-2-color: #eab308;
-  --tier-3-color: #f97316;
-  --tier-4-color: #a855f7;
+  --tier-1-color: #10b981;
+  --tier-2-color: #06b6d4;
+  --tier-3-color: #f59e0b;
+  --tier-4-color: #ec4899;
+  --tier-5-color: #ef4444;
 
   /* Typography Stacks */
   --font-mono: 'Courier New', 'SF Mono', 'Roboto Mono', 'Cascadia Code', monospace;
@@ -101,7 +102,7 @@ html, body {
 }
 
 /* ==========================================================================
-   Dynamic Difficulty Tier Badges
+   Dynamic Difficulty Tier Badges (Tiers 1 through 5)
    ========================================================================== */
 .tier-badge {
   font-size: 9px;
@@ -121,47 +122,54 @@ html, body {
 }
 
 .tier-badge:hover {
-  filter: brightness(1.2);
+  filter: brightness(1.25);
   transform: translateY(-1px);
 }
 
-/* Tier 1: Warmup */
+/* Tier 1: WARMUP (#10b981) */
 .tier-badge.tier-1 {
-  color: #86efac;
-  background: rgba(34, 197, 94, 0.14);
-  border-color: rgba(34, 197, 94, 0.4);
+  color: #6ee7b7;
+  background: rgba(16, 185, 129, 0.14);
+  border-color: rgba(16, 185, 129, 0.4);
 }
 
-/* Tier 2: Accelerated */
+/* Tier 2: COMPOUND (#06b6d4) */
 .tier-badge.tier-2 {
-  color: #fde047;
-  background: rgba(234, 179, 8, 0.18);
-  border-color: rgba(234, 179, 8, 0.5);
+  color: #67e8f9;
+  background: rgba(6, 182, 212, 0.16);
+  border-color: rgba(6, 182, 212, 0.45);
 }
 
-/* Tier 3: High Stress */
+/* Tier 3: MODULO / POWERS (#f59e0b) */
 .tier-badge.tier-3 {
-  color: #fdba74;
-  background: rgba(249, 115, 22, 0.2);
-  border-color: rgba(249, 115, 22, 0.55);
+  color: #fcd34d;
+  background: rgba(245, 158, 11, 0.18);
+  border-color: rgba(245, 158, 11, 0.5);
 }
 
-/* Tier 4: Algebra Hazard (Pulsing Neon Violet) */
+/* Tier 4: ALGEBRA MATRIX (#ec4899) */
 .tier-badge.tier-4 {
-  color: #d8b4fe;
-  background: rgba(168, 85, 247, 0.25);
-  border-color: rgba(168, 85, 247, 0.7);
-  animation: hazard-glow 1.2s infinite alternate ease-in-out;
+  color: #f472b6;
+  background: rgba(236, 72, 153, 0.2);
+  border-color: rgba(236, 72, 153, 0.6);
 }
 
-@keyframes hazard-glow {
+/* Tier 5: APEX SINGULARITY (#ef4444 with rapid strobe) */
+.tier-badge.tier-5 {
+  color: #fca5a5;
+  background: rgba(239, 68, 68, 0.25);
+  border-color: rgba(239, 68, 68, 0.85);
+  animation: apex-strobe 0.7s infinite alternate ease-in-out;
+}
+
+@keyframes apex-strobe {
   0% {
-    box-shadow: 0 0 6px rgba(168, 85, 247, 0.3);
-    border-color: rgba(168, 85, 247, 0.5);
+    box-shadow: 0 0 6px rgba(239, 68, 68, 0.4);
+    border-color: rgba(239, 68, 68, 0.6);
   }
   100% {
-    box-shadow: 0 0 14px rgba(168, 85, 247, 0.85);
-    border-color: rgba(216, 180, 254, 0.95);
+    box-shadow: 0 0 16px rgba(239, 68, 68, 0.95), inset 0 0 6px rgba(239, 68, 68, 0.5);
+    border-color: #ff4d6d;
   }
 }
 
@@ -171,19 +179,9 @@ html, body {
 }
 
 @keyframes tier-upgrade {
-  0% {
-    transform: scale(1);
-    filter: brightness(1);
-  }
-  50% {
-    transform: scale(1.25);
-    filter: brightness(1.6);
-    box-shadow: 0 0 18px rgba(255, 255, 255, 0.8);
-  }
-  100% {
-    transform: scale(1);
-    filter: brightness(1);
-  }
+  0% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.25); filter: brightness(1.7); box-shadow: 0 0 20px rgba(255, 255, 255, 0.9); }
+  100% { transform: scale(1); filter: brightness(1); }
 }
 
 /* Streak Pill */
@@ -264,12 +262,32 @@ html, body {
   transition: border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
+.timer-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 0 8px;
+}
+
 .hud-label {
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 1px;
   color: var(--text-muted);
   text-align: center;
+}
+
+.decay-hint {
+  font-size: 9px;
+  font-family: var(--font-mono);
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.1);
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 1px solid rgba(56, 189, 248, 0.25);
 }
 
 .timer-section {
@@ -290,27 +308,31 @@ html, body {
   transition: color 0.2s ease, text-shadow 0.2s ease;
 }
 
+/* Multi-line & Matrix Equation Section */
 .equation-section {
   display: flex;
   flex-direction: column;
   align-items: center;
   background: var(--bg-input);
   border-radius: 10px;
-  padding: 12px 10px;
+  padding: 10px 10px;
   border: 1px solid var(--border-calm);
   gap: 4px;
-  min-height: 72px;
+  min-height: 78px;
   justify-content: center;
 }
 
 .equation-display {
   font-family: var(--font-mono);
-  font-size: 1.8rem;
+  font-size: 1.5rem;
   font-weight: 800;
-  letter-spacing: 1.5px;
+  letter-spacing: 1px;
   color: #ffffff;
   text-align: center;
+  margin: 0;
+  white-space: pre-wrap;
   word-break: break-word;
+  line-height: 1.35;
 }
 
 /* Input Form */
@@ -408,8 +430,8 @@ body.state-warning .answer-input:focus {
 }
 
 @keyframes warning-pulse {
-  0%   { box-shadow: 0 0 8px rgba(234, 179, 8, 0.3); }
-  100% { box-shadow: 0 0 24px rgba(234, 179, 8, 0.65); }
+  0%   { box-shadow: 0 0 8px rgba(245, 158, 11, 0.3); }
+  100% { box-shadow: 0 0 24px rgba(245, 158, 11, 0.65); }
 }
 
 /* State: Panic (<= 5s) */

@@ -1,13 +1,12 @@
 /**
- * Anti-Procrastination Tab Executioner (v3.1.1)
- * Dynamic Arithmetic Inflation Engine with Persistence & Interactive Tier Switching
+ * Anti-Procrastination Tab Executioner (v3.2.0)
+ * Milestone 4.1: Exponential Cognitive Inflation & Complex Mental Arithmetic Engine
  */
 
 // =============================================================================
-// 1. Game Configuration & Settings
+// 1. Constants & Targeting Configuration
 // =============================================================================
 const CONFIG = Object.freeze({
-  PENALTY_SECONDS: 5,
   COUNTDOWN_INTERVAL_MS: 1000,
   SHAKE_DURATION_MS: 350,
   BUZZER_DURATION_MS: 400,
@@ -15,6 +14,7 @@ const CONFIG = Object.freeze({
   TIER_FLASH_DURATION_MS: 400
 });
 
+// Distracting domains for Strict Mode
 const TARGET_DOMAINS = [
   'youtube.com',
   'reddit.com',
@@ -43,14 +43,16 @@ const GameStates = Object.freeze({
 let currentState = GameStates.IDLE;
 let streakCounter = 0;
 let currentTierLevel = 1;
-let timeLeft = 20;
+let timeLeft = 22;
 let countdownTimer = null;
 let audioCtx = null;
 let currentProblem = {
   displayString: '',
   solution: 0,
+  sublabel: '',
   tierLevel: 1,
-  allocatedTime: 20
+  allocatedTime: 22,
+  penaltySeconds: 5
 };
 
 // =============================================================================
@@ -64,6 +66,8 @@ function initDOMReferences() {
     timerDisplay: document.getElementById('timer-display'),
     problemDisplay: document.getElementById('problem-display'),
     equationSublabel: document.getElementById('equation-sublabel'),
+    decayHint: document.getElementById('decay-hint'),
+    penaltyHint: document.getElementById('penalty-hint'),
     answerInput: document.getElementById('answer-input'),
     submitBtn: document.getElementById('submit-btn'),
     streakDisplay: document.getElementById('streak-display'),
@@ -79,7 +83,7 @@ function initDOMReferences() {
 }
 
 // =============================================================================
-// 5. Zero-Dependency Web Audio Synthesizer
+// 5. Zero-Dependency Web Audio & Psychoacoustic Modulator
 // =============================================================================
 
 function getAudioContext() {
@@ -93,6 +97,41 @@ function getAudioContext() {
   return audioCtx;
 }
 
+/**
+ * Psychoacoustic Stress Pulse: Modulates pitch continuously from 440Hz -> 1200Hz as time runs out.
+ */
+function playUrgencyTone(remainingTime) {
+  if (remainingTime > 6 || remainingTime <= 0) return;
+
+  try {
+    const ctx = getAudioContext();
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+
+    // Map time 6s -> 1s to frequency 440Hz -> 1200Hz
+    const urgencyRatio = Math.max(0, Math.min(1, (6 - remainingTime) / 5));
+    const frequency = 440 + (urgencyRatio * 760); // 440Hz to 1200Hz
+
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(frequency, now);
+
+    gainNode.gain.setValueAtTime(0.08, now);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+    osc.connect(gainNode);
+    gainNode.connect(ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.12);
+  } catch (err) {
+    // Non-critical audio warning
+  }
+}
+
+/**
+ * Piercing 880Hz alert buzzer tone on 0s execution
+ */
 function playBuzzerSound() {
   try {
     const ctx = getAudioContext();
@@ -104,7 +143,7 @@ function playBuzzerSound() {
     osc.frequency.setValueAtTime(880, now);
 
     const gainNode = ctx.createGain();
-    gainNode.gain.setValueAtTime(0.2, now);
+    gainNode.gain.setValueAtTime(0.25, now);
     gainNode.gain.exponentialRampToValueAtTime(0.001, now + durationSec);
 
     osc.connect(gainNode);
@@ -125,8 +164,8 @@ function playSuccessChime() {
     const gainNode = ctx.createGain();
 
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(587.33, now);
-    osc.frequency.exponentialRampToValueAtTime(880, now + 0.12);
+    osc.frequency.setValueAtTime(587.33, now); // D5
+    osc.frequency.exponentialRampToValueAtTime(880, now + 0.12); // A5
 
     gainNode.gain.setValueAtTime(0.15, now);
     gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
@@ -142,153 +181,24 @@ function playSuccessChime() {
 }
 
 // =============================================================================
-// 6. Dynamic Arithmetic Inflation Engine
+// 6. Problem Generation & UI Synchronization
 // =============================================================================
 
-function getRandomInt(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
+function generateAndRenderProblem(streak) {
+  // Leverage math-engine.js module
+  currentProblem = window.MathEngine.generateExponentialProblem(streak);
+  renderActiveProblem();
 }
 
-/**
- * Generates an adaptive math problem based on current survival streak.
- * 
- * Difficulty Tiers:
- * - Tier 1: Warmup (Streak 0-3) -> Simple Add/Sub [20s base]
- * - Tier 2: Escalation (Streak 4-7) -> Double Digit Add/Sub or Standard Multi [18s base]
- * - Tier 3: Cognitive Overload (Streak 8-11) -> 3-term Arithmetic or Heavy Product [15s base]
- * - Tier 4: Supercharged Algebra (Streak 12+) -> Ax ± B = C solving for x [15s base]
- * 
- * @param {number} streak
- * @returns {{ displayString: string, solution: number, tierLevel: number, allocatedTime: number }}
- */
-function generateInflatedProblem(streak) {
-  let displayString = '';
-  let solution = 0;
-  let tierLevel = 1;
-  let allocatedTime = 20;
-
-  if (streak <= 3) {
-    // ---- Tier 1: Warmup (Streak 0 - 3) ----
-    tierLevel = 1;
-    allocatedTime = 20;
-    const isAdd = Math.random() > 0.5;
-    let a = getRandomInt(3, 20);
-    let b = getRandomInt(2, 15);
-
-    if (isAdd) {
-      solution = a + b;
-      displayString = `${a} + ${b} = ?`;
-    } else {
-      if (a < b) [a, b] = [b, a]; // Guarantee non-negative
-      solution = a - b;
-      displayString = `${a} - ${b} = ?`;
-    }
-
-  } else if (streak <= 7) {
-    // ---- Tier 2: Escalation (Streak 4 - 7) ----
-    tierLevel = 2;
-    allocatedTime = 18;
-    const opChoice = Math.random();
-
-    if (opChoice < 0.35) {
-      // Large Addition
-      const a = getRandomInt(15, 60);
-      const b = getRandomInt(10, 40);
-      solution = a + b;
-      displayString = `${a} + ${b} = ?`;
-    } else if (opChoice < 0.7) {
-      // Large Subtraction
-      let a = getRandomInt(15, 60);
-      let b = getRandomInt(10, 40);
-      if (a < b) [a, b] = [b, a];
-      solution = a - b;
-      displayString = `${a} - ${b} = ?`;
-    } else {
-      // Standard Multiplication (3 to 12)
-      const a = getRandomInt(3, 12);
-      const b = getRandomInt(3, 12);
-      solution = a * b;
-      displayString = `${a} × ${b} = ?`;
-    }
-
-  } else if (streak <= 11) {
-    // ---- Tier 3: Cognitive Overload (Streak 8 - 11) ----
-    tierLevel = 3;
-    allocatedTime = 15;
-    const isChaining = Math.random() > 0.45;
-
-    if (isChaining) {
-      // 3-term Arithmetic Chaining: (A ± B) ± C
-      const a = getRandomInt(10, 30);
-      const b = getRandomInt(4, 18);
-      const c = getRandomInt(3, 15);
-      const isFirstAdd = Math.random() > 0.5;
-      const isSecondAdd = Math.random() > 0.5;
-
-      let firstResult = isFirstAdd ? (a + b) : Math.max(a, b) - Math.min(a, b);
-      let op1 = isFirstAdd ? '+' : '-';
-      let term1 = isFirstAdd ? a : Math.max(a, b);
-      let term2 = isFirstAdd ? b : Math.min(a, b);
-
-      let op2 = isSecondAdd ? '+' : '-';
-      if (!isSecondAdd && firstResult < c) {
-        op2 = '+'; // avoid negative total
-        solution = firstResult + c;
-      } else if (isSecondAdd) {
-        solution = firstResult + c;
-      } else {
-        solution = firstResult - c;
-      }
-
-      displayString = `${term1} ${op1} ${term2} ${op2} ${c} = ?`;
-    } else {
-      // Heavy Product
-      const a = getRandomInt(13, 25);
-      const b = getRandomInt(4, 9);
-      solution = a * b;
-      displayString = `${a} × ${b} = ?`;
-    }
-
-  } else {
-    // ---- Tier 4: Supercharged Single-Variable Algebra (Streak 12+) ----
-    tierLevel = 4;
-    allocatedTime = 15;
-    const isAddition = Math.random() > 0.5;
-    const a = getRandomInt(2, 6);
-    const x = getRandomInt(2, 10); // Target solution
-    const b = getRandomInt(1, 15);
-
-    if (isAddition) {
-      const c = (a * x) + b;
-      displayString = `Find x: ${a}x + ${b} = ${c}`;
-    } else {
-      const c = (a * x) - b;
-      if (c >= 0) {
-        displayString = `Find x: ${a}x - ${b} = ${c}`;
-      } else {
-        const cAdd = (a * x) + b;
-        displayString = `Find x: ${a}x + ${b} = ${cAdd}`;
-      }
-    }
-
-    solution = x;
-  }
-
-  currentProblem = { displayString, solution, tierLevel, allocatedTime };
-  return currentProblem;
-}
-
-/**
- * Updates Tier Badge label, styling, and level-up animation.
- */
 function updateTierUI(tierLevel) {
   if (!dom.tierBadge) return;
 
   const tierMetadata = {
-    1: { label: 'WARMUP ⚡', class: 'tier-1', hint: 'Tier 1: Simple Addition/Subtraction' },
-    2: { label: 'ACCELERATED ⚡⚡', class: 'tier-2', hint: 'Tier 2: Double Digits & Multi' },
-    3: { label: 'HIGH STRESS 🔥', class: 'tier-3', hint: 'Tier 3: 3-Term Equations & Heavy Multi' },
-    4: { label: 'ALGEBRA HAZARD ☣️', class: 'tier-4', hint: 'Tier 4: Solve for x' }
+    1: { label: 'WARMUP ⚡', class: 'tier-1', hint: 'Tier 1: Linear Warmup (2-Digit & Tables)' },
+    2: { label: 'COMPOUND ⚡⚡', class: 'tier-2', hint: 'Tier 2: Nested Precedence & Compound Products' },
+    3: { label: 'MODULO / POWERS 🔥', class: 'tier-3', hint: 'Tier 3: Modulo, Square Roots & Exponents' },
+    4: { label: 'ALGEBRA MATRIX 🧠', class: 'tier-4', hint: 'Tier 4: Single-Variable Inversion' },
+    5: { label: 'APEX SINGULARITY ☣️', class: 'tier-5', hint: 'Tier 5: 2×2 Matrix Determinants & Base Conv' }
   };
 
   const currentMeta = tierMetadata[tierLevel] || tierMetadata[1];
@@ -305,8 +215,16 @@ function updateTierUI(tierLevel) {
   dom.tierBadge.className = `tier-badge ${currentMeta.class}`;
   dom.tierBadge.title = `Difficulty: ${currentMeta.hint} (Click to cycle tier)`;
 
-  if (dom.equationSublabel) {
-    dom.equationSublabel.textContent = (tierLevel === 4) ? 'SUBMIT THE INTEGER VALUE OF X' : 'SOLVE TO KEEP TAB ALIVE';
+  if (dom.equationSublabel && currentProblem.sublabel) {
+    dom.equationSublabel.textContent = currentProblem.sublabel;
+  }
+
+  if (dom.decayHint) {
+    dom.decayHint.textContent = `BASE: ${currentProblem.allocatedTime}s`;
+  }
+
+  if (dom.penaltyHint) {
+    dom.penaltyHint.textContent = `⚠️ Wrong Answer = -${currentProblem.penaltySeconds}s Penalty | 0s = Tab Execution`;
   }
 }
 
@@ -317,17 +235,16 @@ function renderActiveProblem() {
 }
 
 /**
- * Allows the user/presenter to manually cycle tiers by clicking the Tier Badge
+ * Interactive tier jumper: cycles between Tiers 1 through 5
  */
 function cycleDifficultyTier() {
-  const nextTier = (currentTierLevel % 4) + 1;
-  const tierStreakMap = { 1: 0, 2: 4, 3: 8, 4: 12 };
+  const nextTier = (currentTierLevel % 5) + 1;
+  const tierStreakMap = { 1: 0, 2: 3, 3: 6, 4: 9, 5: 12 };
   streakCounter = tierStreakMap[nextTier] || 0;
 
-  generateInflatedProblem(streakCounter);
+  generateAndRenderProblem(streakCounter);
   timeLeft = currentProblem.allocatedTime;
 
-  renderActiveProblem();
   syncUI();
   saveSessionState();
 
@@ -439,6 +356,11 @@ function startTimerLoop() {
 
     timeLeft -= 1;
 
+    // Psychoacoustic feedback when countdown is under 6 seconds
+    if (timeLeft <= 6 && timeLeft > 0) {
+      playUrgencyTone(timeLeft);
+    }
+
     if (timeLeft <= 0) {
       timeLeft = 0;
       syncUI();
@@ -468,7 +390,7 @@ function transitionTo(nextState) {
       stopTimerLoop();
       streakCounter = 0;
       currentTierLevel = 1;
-      timeLeft = currentProblem.allocatedTime || 20;
+      timeLeft = currentProblem.allocatedTime || 22;
       syncUI();
       break;
 
@@ -478,9 +400,10 @@ function transitionTo(nextState) {
       if (dom.answerInput) dom.answerInput.focus();
       break;
 
-    case GameStates.PENALTY:
-      timeLeft = Math.max(0, timeLeft - CONFIG.PENALTY_SECONDS);
-      setStatus(`✗ Incorrect! -${CONFIG.PENALTY_SECONDS}s Penalty`, 'error');
+    case GameStates.PENALTY: {
+      const penalty = currentProblem.penaltySeconds || 5;
+      timeLeft = Math.max(0, timeLeft - penalty);
+      setStatus(`✗ Incorrect! -${penalty}s Penalty`, 'error');
 
       triggerTypoPenaltyShake();
 
@@ -493,6 +416,7 @@ function transitionTo(nextState) {
         currentState = GameStates.ACTIVE;
       }
       break;
+    }
 
     case GameStates.FAILED:
       stopTimerLoop();
@@ -605,16 +529,16 @@ function handleInputEvaluation(e) {
 
   if (rawInput === '') return;
 
-  // Extract integer (handles "6", "-5", "x=6", "Find x: 6")
+  // Extract clean integer (handles negative integers, "x=10", "10", "0x3F => 63")
   const cleanInput = rawInput.replace(/[^0-9\-]/g, '');
   const parsedValue = parseInt(cleanInput, 10);
 
   if (!isNaN(parsedValue) && parsedValue === currentProblem.solution) {
-    // ---- Correct Answer: Inflate difficulty ----
+    // ---- Correct Answer: Exponential escalation ----
     streakCounter += 1;
     saveSessionState();
 
-    generateInflatedProblem(streakCounter);
+    generateAndRenderProblem(streakCounter);
     timeLeft = currentProblem.allocatedTime;
 
     playSuccessChime();
@@ -624,10 +548,9 @@ function handleInputEvaluation(e) {
     dom.answerInput.value = '';
     dom.answerInput.focus();
 
-    renderActiveProblem();
     syncUI();
   } else {
-    // ---- Incorrect Answer: 5s penalty, keep streak ----
+    // ---- Incorrect Answer: Exponential Penalty ----
     dom.answerInput.value = '';
     dom.answerInput.focus();
     transitionTo(GameStates.PENALTY);
@@ -635,38 +558,33 @@ function handleInputEvaluation(e) {
 }
 
 // =============================================================================
-// 14. Initialization (Strict Manifest V3)
+// 14. Initialization
 // =============================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
   initDOMReferences();
   updateModeDisplay();
 
-  // Load persisted streak or start fresh
+  // Load persistent streak or default to 0
   loadSessionState(() => {
-    generateInflatedProblem(streakCounter);
+    generateAndRenderProblem(streakCounter);
     timeLeft = currentProblem.allocatedTime;
-    renderActiveProblem();
     syncUI();
     transitionTo(GameStates.ACTIVE);
   });
 
-  // Auto-focus input
   if (dom.answerInput) {
     dom.answerInput.focus();
   }
 
-  // Interactive Tier Badge Click Listener (Quick testing & manual override)
   if (dom.tierBadge) {
     dom.tierBadge.addEventListener('click', cycleDifficultyTier);
   }
 
-  // Mode Toggle
   if (dom.modeToggleBtn) {
     dom.modeToggleBtn.addEventListener('click', toggleTargetMode);
   }
 
-  // Form Submit & Button Click
   if (dom.answerForm) {
     dom.answerForm.addEventListener('submit', handleInputEvaluation);
   }

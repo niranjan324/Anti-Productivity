@@ -15,7 +15,7 @@
         <h1 class="brand-title">TAB EXECUTIONER</h1>
       </div>
       <div class="header-badges">
-        <button type="button" class="tier-badge tier-1" id="tier-badge" title="Click to cycle difficulty tier (Warmup → Accelerated → High Stress → Algebra)">WARMUP ⚡</button>
+        <button type="button" class="tier-badge tier-1" id="tier-badge" title="Click to cycle difficulty tier (Tiers 1-5)">WARMUP ⚡</button>
         <div class="streak-pill" id="streak-badge" title="Continuous correct equations">
           <span class="streak-icon">🔥</span>
           <span class="streak-text">STREAK</span>
@@ -36,14 +36,17 @@
     <main class="stage-card" id="stage-card">
       <!-- High-Visibility Timer Section -->
       <section class="timer-section">
-        <span class="hud-label" id="hud-timer-label">TIME REMAINING</span>
-        <div class="timer-display" id="timer-display">20s</div>
+        <div class="timer-header-row">
+          <span class="hud-label" id="hud-timer-label">TIME REMAINING</span>
+          <span class="decay-hint" id="decay-hint">BASE: 22s</span>
+        </div>
+        <div class="timer-display" id="timer-display">22s</div>
       </section>
 
-      <!-- Oversized Math Display -->
+      <!-- Oversized Math Display Container -->
       <section class="equation-section">
-        <span class="hud-label" id="equation-sublabel">SOLVE TO KEEP TAB ALIVE</span>
-        <div class="equation-display" id="problem-display">--</div>
+        <span class="hud-label" id="equation-sublabel">CALCULATE SUM</span>
+        <pre class="equation-display" id="problem-display">--</pre>
       </section>
 
       <!-- Input Form -->
@@ -53,7 +56,7 @@
             type="text" 
             id="answer-input" 
             class="answer-input" 
-            placeholder="Type answer..." 
+            placeholder="Integer answer..." 
             autocomplete="off" 
             autofocus 
             required
@@ -68,10 +71,11 @@
 
     <!-- Footer Rules -->
     <footer class="footer">
-      <span class="footer-hint">⚠️ Wrong Answer = -5s Penalty | 0s = Immediate Tab Close</span>
+      <span class="footer-hint" id="penalty-hint">⚠️ Wrong Answer = -5s Penalty | 0s = Tab Execution</span>
     </footer>
   </div>
 
+  <script src="math-engine.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>
