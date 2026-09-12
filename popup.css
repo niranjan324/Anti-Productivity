@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Anti-Procrastination Tab Executioner - Terminal Interceptor Theme (v4.3.0)
+   Anti-Procrastination Tab Executioner - Terminal Interceptor Theme (v4.4.0)
    Dedicated Panel Viewport: Strict 360px x 500px Viewport Normalization
    ========================================================================== */
 
@@ -809,68 +809,64 @@ body.state-panic .terminal-container {
   border-radius: 0 4px 4px 0;
 }
 
-/* Lockout Controls & Reset */
-.lockout-control-area {
+/* ==========================================================================
+   Zero-Redemption Mandatory Liquidation HUD
+   ========================================================================== */
+body.state-failed,
+body.state-failed *,
+.shame-overlay,
+.shame-overlay * {
+  cursor: not-allowed !important;
+}
+
+.liquidation-hud {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  gap: 4px;
   width: 100%;
+  padding: 8px 12px;
+  background: rgba(255, 46, 84, 0.12);
+  border: 1px solid rgba(255, 46, 84, 0.65);
+  border-radius: 8px;
+  box-shadow: 0 0 16px rgba(255, 46, 84, 0.35);
+  animation: liquidationHazardStrobe 1s infinite alternate ease-in-out;
+  box-sizing: border-box;
 }
 
-.lockout-timer {
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
+@keyframes liquidationHazardStrobe {
+  0%   { border-color: rgba(255, 46, 84, 0.5); box-shadow: 0 0 10px rgba(255, 46, 84, 0.3); }
+  100% { border-color: #ff2e54; box-shadow: 0 0 24px rgba(255, 46, 84, 0.7); }
+}
+
+.status-alert {
+  font-size: 0.62rem;
   font-weight: 900;
-  letter-spacing: 0.1em;
-  color: #ff2e54;
-  animation: alertPulse 0.3s infinite alternate;
+  letter-spacing: 0.12em;
+  color: #ff859c;
+  text-transform: uppercase;
   text-align: center;
 }
 
-.lockout-timer.redemption-ready {
-  color: #10b981;
-  text-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
-  animation: none;
-}
-
-.retry-action-btn {
-  width: 100%;
-  background: #ff2e54;
-  color: #ffffff;
-  border: none;
-  border-radius: 8px;
-  padding: 10px 14px;
-  font-family: var(--font-sans);
-  font-size: 0.78rem;
+.liquidation-timer {
+  font-family: var(--font-mono);
+  font-size: 1.45rem;
   font-weight: 900;
-  letter-spacing: 0.1em;
-  cursor: pointer;
-  box-shadow: 0 0 16px rgba(255, 46, 84, 0.7);
-  transition: transform 0.1s ease, filter 0.2s ease, background 0.2s ease;
-  animation: retryPulse 1.2s infinite ease-in-out;
+  letter-spacing: 0.08em;
+  color: #ff2e54;
+  text-shadow: 0 0 16px rgba(255, 46, 84, 0.95);
+  animation: alertPulse 0.3s infinite alternate;
 }
 
-@keyframes retryPulse {
-  0%   { transform: scale(1); box-shadow: 0 0 12px rgba(255, 46, 84, 0.6); }
-  50%  { transform: scale(1.03); box-shadow: 0 0 22px rgba(255, 46, 84, 0.95); }
-  100% { transform: scale(1); box-shadow: 0 0 12px rgba(255, 46, 84, 0.6); }
+.liquidation-executing {
+  font-size: 0.75rem !important;
+  color: #ffffff !important;
+  background: #ff2e54 !important;
+  padding: 4px 10px;
+  border-radius: 4px;
+  text-shadow: none !important;
+  animation: none !important;
 }
 
-.retry-action-btn:hover:not(:disabled) {
-  filter: brightness(1.15);
-  background: #ff476a;
-}
-
-.retry-action-btn:active:not(:disabled) {
-  transform: scale(0.97);
-}
-
-.retry-action-btn:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-  pointer-events: none;
-  animation: none;
-  box-shadow: none;
-}
 

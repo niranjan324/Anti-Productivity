@@ -1,6 +1,6 @@
 /**
- * Anti-Procrastination Tab Executioner (v4.3.0)
- * Terminal Interceptor GUI Controller & Dedicated Panel Focus Trap
+ * Anti-Procrastination Tab Executioner (v4.4.0)
+ * Terminal Interceptor GUI Controller & Mandatory Zero-Redemption Liquidation Engine
  */
 
 // =============================================================================
@@ -96,7 +96,7 @@ function initDOMReferences() {
     answerForm: document.getElementById('answer-form'),
     statusDot: document.getElementById('status-dot'),
     
-    // Shame Screen Overlay Elements
+    // Shame Screen & Liquidation Overlay Elements
     shameOverlay: document.getElementById('shame-overlay'),
     deceasedTabTitle: document.getElementById('deceased-tab-title'),
     deceasedTabDomain: document.getElementById('deceased-tab-domain'),
@@ -105,8 +105,8 @@ function initDOMReferences() {
     shameStreakDisplay: document.getElementById('shame-streak-display'),
     shameRatingDisplay: document.getElementById('shame-rating-display'),
     shameQuoteDisplay: document.getElementById('shame-quote-display'),
-    lockoutTimerDisplay: document.getElementById('lockout-timer-display'),
-    shameRetryBtn: document.getElementById('shame-retry-btn')
+    liquidationHud: document.getElementById('liquidation-hud'),
+    liquidationTimer: document.getElementById('liquidation-timer')
   };
 }
 
@@ -541,8 +541,8 @@ function handleExecutionAndShameScreen() {
     dom.shameOverlay.classList.remove('hidden');
   }
 
-  // 4. Start 7-second unskippable lockout countdown
-  startLockoutCountdown();
+  // 4. Start 7-second mandatory liquidation countdown
+  startLiquidationCountdown();
 }
 
 function populateShameScreen(title, domain) {
@@ -571,96 +571,57 @@ function populateShameScreen(title, domain) {
   }
 }
 
-function startLockoutCountdown() {
-  let lockoutSeconds = CONFIG.LOCKOUT_SECONDS;
+/**
+ * Executes the mandatory 7-second liquidation countdown followed by auto-purge & window close
+ */
+function startLiquidationCountdown() {
+  let liquidationSeconds = CONFIG.LOCKOUT_SECONDS || 7;
   isLockoutActive = true;
 
-  if (dom.lockoutTimerDisplay) {
-    dom.lockoutTimerDisplay.classList.remove('hidden', 'redemption-ready');
-    dom.lockoutTimerDisplay.textContent = `PUNISHMENT LOCKOUT: 0${lockoutSeconds}s`;
-  }
-
-  if (dom.shameRetryBtn) {
-    dom.shameRetryBtn.classList.add('hidden');
-    dom.shameRetryBtn.disabled = true;
+  if (dom.liquidationTimer) {
+    dom.liquidationTimer.classList.remove('liquidation-executing');
+    dom.liquidationTimer.textContent = `0${liquidationSeconds}s`;
   }
 
   clearInterval(lockoutTimer);
   lockoutTimer = setInterval(() => {
-    lockoutSeconds -= 1;
+    liquidationSeconds -= 1;
 
-    if (lockoutSeconds <= 0) {
+    if (liquidationSeconds <= 0) {
       clearInterval(lockoutTimer);
       isLockoutActive = false;
 
-      if (dom.lockoutTimerDisplay) {
-        dom.lockoutTimerDisplay.textContent = 'SYSTEM READY FOR REDEMPTION';
-        dom.lockoutTimerDisplay.classList.add('redemption-ready');
-      }
-
-      if (dom.shameRetryBtn) {
-        dom.shameRetryBtn.classList.remove('hidden');
-        dom.shameRetryBtn.disabled = false;
-        dom.shameRetryBtn.focus();
-      }
-
+      // Silence harassment siren
       if (window.AudioHarassment) {
         window.AudioHarassment.stopAcousticHarassmentSiren();
       }
+
+      // Display terminal execution badge
+      if (dom.liquidationTimer) {
+        dom.liquidationTimer.textContent = 'EXECUTING TERMINATION...';
+        dom.liquidationTimer.classList.add('liquidation-executing');
+      }
+
+      // Mandatory Auto-Purge: Destroy target tab and close execution window
+      setTimeout(() => {
+        if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+          chrome.runtime.sendMessage({ type: 'TERMINATE_TARGET_TAB' }, () => {
+            window.close();
+          });
+        } else if (pendingTargetTabId && typeof chrome !== 'undefined' && chrome.tabs) {
+          chrome.tabs.remove(pendingTargetTabId, () => {
+            window.close();
+          });
+        } else {
+          window.close();
+        }
+      }, 200);
     } else {
-      if (dom.lockoutTimerDisplay) {
-        dom.lockoutTimerDisplay.textContent = `PUNISHMENT LOCKOUT: 0${lockoutSeconds}s`;
+      if (dom.liquidationTimer) {
+        dom.liquidationTimer.textContent = `0${liquidationSeconds}s`;
       }
     }
   }, 1000);
-}
-
-/**
- * Resets the session after the user confesses and clicks retry
- */
-function handleShameReset() {
-  if (isLockoutActive) return; // Strict lock during punishment cooldown
-
-  if (window.AudioHarassment) {
-    window.AudioHarassment.stopAcousticHarassmentSiren();
-  }
-
-  // Execute the deferred tab termination now that the full 7s shame sequence has completed
-  if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
-    chrome.runtime.sendMessage({ type: 'TERMINATE_TARGET_TAB' });
-  } else if (pendingShouldTerminate && pendingTargetTabId && typeof chrome !== 'undefined' && chrome.tabs) {
-    const tabToKill = pendingTargetTabId;
-    pendingTargetTabId = null;
-    pendingShouldTerminate = false;
-    chrome.tabs.remove(tabToKill, () => {
-      if (chrome.runtime && chrome.runtime.lastError) {
-        console.warn('Tab termination notice:', chrome.runtime.lastError.message);
-      }
-    });
-  }
-
-  if (dom.shameOverlay) {
-    dom.shameOverlay.classList.add('hidden');
-  }
-
-  resetSessionState();
-  lastEnteredValue = '[TIMEOUT]';
-
-  if (dom.answerInput) {
-    dom.answerInput.disabled = false;
-    dom.answerInput.value = '';
-    dom.answerInput.focus();
-  }
-  if (dom.submitBtn) {
-    dom.submitBtn.disabled = false;
-  }
-
-  generateAndRenderProblem(0);
-  timeLeft = currentProblem.allocatedTime;
-  syncUI();
-
-  transitionTo(GameStates.ACTIVE);
-  setStatus('SYSTEM RE-ARMED // TIER 1 WARMUP', 'info');
 }
 
 // =============================================================================
@@ -750,10 +711,6 @@ document.addEventListener('DOMContentLoaded', () => {
     dom.submitBtn.addEventListener('click', handleInputEvaluation);
   }
 
-  if (dom.shameRetryBtn) {
-    dom.shameRetryBtn.addEventListener('click', handleShameReset);
-  }
-
   // Pointer Capture & Full-Window Shield
   if (dom.mainContainer) {
     dom.mainContainer.addEventListener('pointerdown', (e) => {
@@ -777,14 +734,12 @@ document.addEventListener('DOMContentLoaded', () => {
     handleEscapeAttempt();
   });
 
-  // Keyboard shortcut suppression and escape interception
+  // Keyboard shortcut suppression and full input consumption during liquidation
   window.addEventListener('keydown', (e) => {
-    if (isLockoutActive) {
-      if (['Enter', ' ', 'Escape', 'Tab'].includes(e.key) || e.code === 'Space' || e.code === 'Enter') {
-        e.preventDefault();
-        e.stopPropagation();
-        return;
-      }
+    if (isLockoutActive || currentState === GameStates.FAILED) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
     }
 
     // Intercept escape combinations (Ctrl+W, Ctrl+R, F5, F12)
