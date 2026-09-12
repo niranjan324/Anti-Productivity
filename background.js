@@ -1,5 +1,5 @@
 /**
- * Anti-Procrastination Tab Executioner (v4.3.0)
+ * Anti-Procrastination Tab Executioner (v4.4.0)
  * background.js - Window Lockdown Controller, Focus Trap, and Defiance Engine
  */
 
@@ -27,28 +27,32 @@ chrome.action.onClicked.addListener(async (tab) => {
     }
   }
 
-  // 2. Capture target tab details before opening the panel
-  if (tab && tab.id) {
-    targetTabId = tab.id;
-    targetTabInfo = {
-      title: tab.title || 'Untitled Tab',
-      url: tab.url || 'browser-tab'
-    };
-  } else {
-    const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (activeTab) {
-      targetTabId = activeTab.id;
-      targetTabInfo = {
-        title: activeTab.title || 'Untitled Tab',
-        url: activeTab.url || 'browser-tab'
-      };
+  // 2. Capture target tab details from the active browser window
+  let targetTab = tab;
+  if (!targetTab || !targetTab.id || (targetTab.url && targetTab.url.startsWith('chrome-extension://'))) {
+    const normalWindows = await chrome.windows.getAll({ populate: true, windowTypes: ['normal'] });
+    if (normalWindows && normalWindows.length > 0) {
+      const focusedWin = normalWindows.find((w) => w.focused) || normalWindows[0];
+      const active = focusedWin?.tabs?.find((t) => t.active);
+      if (active && !active.url.startsWith('chrome-extension://')) {
+        targetTab = active;
+      }
     }
   }
 
-  // Persist target info into storage for session resilience
+  if (targetTab && targetTab.id && !targetTab.url.startsWith('chrome-extension://')) {
+    targetTabId = targetTab.id;
+    targetTabInfo = {
+      title: targetTab.title || 'Untitled Tab',
+      url: targetTab.url || 'browser-tab'
+    };
+  }
+
+  // Reset streak state to 0 for a fresh run and persist target info into storage
   await chrome.storage.local.set({
     targetTabId,
     targetTabInfo,
+    savedStreak: 0,
     isSessionActive: true
   });
 
@@ -93,15 +97,24 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       break;
 
     case 'GET_TARGET_TAB':
-      sendResponse({ targetTabId, targetTabInfo });
-      break;
+      (async () => {
+        if (!targetTabId) {
+          const res = await chrome.storage.local.get(['targetTabId', 'targetTabInfo']);
+          if (res && res.targetTabId) {
+            targetTabId = res.targetTabId;
+            targetTabInfo = res.targetTabInfo || targetTabInfo;
+          }
+        }
+        sendResponse({ targetTabId, targetTabInfo });
+      })();
+      return true;
 
     case 'UPDATE_SESSION_STATUS':
       isSessionActive = Boolean(message.active);
-      if (message.targetTabId !== undefined) {
+      if (message.targetTabId) {
         targetTabId = message.targetTabId;
       }
-      if (message.targetTabInfo !== undefined) {
+      if (message.targetTabInfo) {
         targetTabInfo = message.targetTabInfo;
       }
       chrome.storage.local.set({ isSessionActive, targetTabId, targetTabInfo });
@@ -109,17 +122,40 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       break;
 
     case 'TERMINATE_TARGET_TAB':
-      if (targetTabId) {
-        const tabToKill = targetTabId;
-        targetTabId = null;
-        chrome.tabs.remove(tabToKill, () => {
-          if (chrome.runtime.lastError) {
-            console.warn('Target tab termination notice:', chrome.runtime.lastError.message);
+      (async () => {
+        let tabToKill = message.targetTabId || targetTabId;
+        if (!tabToKill) {
+          const res = await chrome.storage.local.get(['targetTabId']);
+          tabToKill = res ? res.targetTabId : null;
+        }
+
+        // Fallback: locate active tab in the main normal window
+        if (!tabToKill) {
+          const normalWindows = await chrome.windows.getAll({ populate: true, windowTypes: ['normal'] });
+          if (normalWindows && normalWindows.length > 0) {
+            const focusedWin = normalWindows.find((w) => w.focused) || normalWindows[0];
+            const active = focusedWin?.tabs?.find((t) => t.active);
+            if (active && !active.url.startsWith('chrome-extension://')) {
+              tabToKill = active.id;
+            }
           }
-        });
-      }
-      sendResponse({ status: 'terminated' });
-      break;
+        }
+
+        if (tabToKill) {
+          chrome.tabs.remove(tabToKill, () => {
+            if (chrome.runtime.lastError) {
+              console.warn('Target tab termination notice:', chrome.runtime.lastError.message);
+            }
+          });
+        }
+
+        // Reset session state and streak storage for next time
+        targetTabId = null;
+        isSessionActive = false;
+        await chrome.storage.local.set({ isSessionActive: false, targetTabId: null, savedStreak: 0 });
+        sendResponse({ status: 'terminated' });
+      })();
+      return true;
 
     case 'CLOSE_EXECUTION_WINDOW':
       isSessionActive = false;
@@ -173,6 +209,6 @@ chrome.windows.onRemoved.addListener((windowId) => {
     activeExecutionWindowId = null;
     isSessionActive = false;
     targetTabId = null;
-    chrome.storage.local.set({ isSessionActive: false, targetTabId: null });
+    chrome.storage.local.set({ isSessionActive: false, targetTabId: null, savedStreak: 0 });
   }
 });

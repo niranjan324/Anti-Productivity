@@ -357,11 +357,11 @@ function transitionTo(nextState) {
       syncUI();
       if (dom.answerInput) dom.answerInput.focus();
       if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
-        chrome.runtime.sendMessage({
-          type: 'UPDATE_SESSION_STATUS',
-          active: true,
-          targetTabId: pendingTargetTabId
-        });
+        const msg = { type: 'UPDATE_SESSION_STATUS', active: true };
+        if (pendingTargetTabId) {
+          msg.targetTabId = pendingTargetTabId;
+        }
+        chrome.runtime.sendMessage(msg);
       }
       break;
 
@@ -476,51 +476,46 @@ function calculateHumiliationRating(streak) {
 
 /**
  * Orchestrates the full post-mortem failure sequence:
- * 1. Capture target tab details and mute background audio.
- * 2. Hold tab termination until user completes 7s shame sequence (prevents Chrome from dismissing the popup).
+ * 1. Read cached target tab details from background/storage.
+ * 2. Mute background audio.
  * 3. Start 7-second acoustic harassment siren.
- * 4. Render Shame Overlay with obituary, fatal recap, and 7s lockout timer.
+ * 4. Render Shame Overlay with obituary, fatal recap, and 7s countdown.
  */
 function handleExecutionAndShameScreen() {
   if (dom.answerInput) dom.answerInput.disabled = true;
   if (dom.submitBtn) dom.submitBtn.disabled = true;
 
-  // 1. Query target tab immediately and record details
-  if (typeof chrome !== 'undefined' && chrome.tabs) {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+  // 1. Reset streak in storage immediately so future launches always start fresh at Tier 1
+  resetSessionState();
+
+  // 2. Query target tab from storage & background service worker
+  if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+    chrome.storage.local.get(['targetTabId', 'targetTabInfo'], (res) => {
       let deceasedTitle = 'Distracting Browser Tab';
       let deceasedDomain = 'web.page';
-      pendingTargetTabId = null;
-      pendingShouldTerminate = true;
 
-      if (tabs && tabs.length > 0 && tabs[0]) {
-        const activeTab = tabs[0];
-        pendingTargetTabId = activeTab.id;
-        deceasedTitle = activeTab.title || 'Untitled Tab';
-
+      if (res && res.targetTabInfo) {
+        deceasedTitle = res.targetTabInfo.title || 'Distracting Tab';
         try {
-          deceasedDomain = new URL(activeTab.url).hostname || activeTab.url;
+          deceasedDomain = new URL(res.targetTabInfo.url).hostname || res.targetTabInfo.url;
         } catch {
-          deceasedDomain = activeTab.url || 'browser-tab';
+          deceasedDomain = res.targetTabInfo.url || 'browser-tab';
         }
+      }
 
-        if (isProtectedUrl(activeTab.url)) {
-          pendingShouldTerminate = false;
-        } else if (!isDemoMode && !isTargetDistraction(activeTab.url)) {
-          pendingShouldTerminate = false;
-        }
+      if (res && res.targetTabId) {
+        pendingTargetTabId = res.targetTabId;
+        pendingShouldTerminate = true;
 
-        // Mute active tab immediately to silence distractions during harassment siren
-        if (pendingShouldTerminate && pendingTargetTabId) {
-          try {
-            chrome.tabs.update(pendingTargetTabId, { muted: true }, () => {
-              if (chrome.runtime && chrome.runtime.lastError) {
-                // Ignore
-              }
-            });
-          } catch (e) {
-            // Ignore
-          }
+        // Mute active tab immediately to silence background audio during harassment siren
+        try {
+          chrome.tabs.update(pendingTargetTabId, { muted: true }, () => {
+            if (chrome.runtime && chrome.runtime.lastError) {
+              // Ignore
+            }
+          });
+        } catch (e) {
+          // Ignore
         }
       }
 
@@ -531,17 +526,17 @@ function handleExecutionAndShameScreen() {
     populateShameScreen('Test Browser Tab', 'example.com');
   }
 
-  // 2. Start 7-second multi-oscillator harassment siren
+  // 3. Start 7-second multi-oscillator harassment siren
   if (window.AudioHarassment) {
     window.AudioHarassment.startAcousticHarassmentSiren();
   }
 
-  // 3. Show Shame Screen Overlay
+  // 4. Show Shame Screen Overlay
   if (dom.shameOverlay) {
     dom.shameOverlay.classList.remove('hidden');
   }
 
-  // 4. Start 7-second mandatory liquidation countdown
+  // 5. Start 7-second mandatory liquidation countdown
   startLiquidationCountdown();
 }
 
@@ -602,10 +597,13 @@ function startLiquidationCountdown() {
         dom.liquidationTimer.classList.add('liquidation-executing');
       }
 
+      // Ensure storage is fully reset
+      resetSessionState();
+
       // Mandatory Auto-Purge: Destroy target tab and close execution window
       setTimeout(() => {
         if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
-          chrome.runtime.sendMessage({ type: 'TERMINATE_TARGET_TAB' }, () => {
+          chrome.runtime.sendMessage({ type: 'TERMINATE_TARGET_TAB', targetTabId: pendingTargetTabId }, () => {
             window.close();
           });
         } else if (pendingTargetTabId && typeof chrome !== 'undefined' && chrome.tabs) {
@@ -615,7 +613,7 @@ function startLiquidationCountdown() {
         } else {
           window.close();
         }
-      }, 200);
+      }, 250);
     } else {
       if (dom.liquidationTimer) {
         dom.liquidationTimer.textContent = `0${liquidationSeconds}s`;
