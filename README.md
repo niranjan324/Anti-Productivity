@@ -93,7 +93,7 @@ For Software:
 
 ### Project Demo
 # Video
-[Watch Project Demo Video on Google Drive](https://drive.google.com/drive/folders/1s0_GdIhSs685IxyQaxE7kOWlp-UlTPHc)
+[Watch Project Demo Video on Google Drive](https://drive.google.com/file/d/1QshwU052rrK1wMxH7paNJhNzRtqv1LLi/view?usp=drive_link)
 
 *Demonstration of automatic tab interception, unescapable window lockdown, procedural math stress gameplay, 7-second acoustic harassment siren, Russian Tab Roulette liquidation, and the persistent Tab Graveyard dashboard.*
 
