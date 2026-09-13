@@ -60,8 +60,19 @@ For Software:
 ---
 
 ### Project Documentation
+For Software:
 
-# Workflow Architecture
+# Screenshots (Add at least 3)
+![Interceptor HUD](screenshots/interceptor-hud.png)
+*Auto-Interception Engine & Unescapable HUD Window holding an active YouTube tab hostage under Tier 1 math pressure with Russian Roulette armed.*
+
+![Zero-Redemption Shame Screen](screenshots/shame-screen-liquidation.png)
+*Zero-Redemption Shame Screen & 7-Second Liquidation Countdown playing acoustic harassment siren while target tab is locked in.*
+
+![Tab Graveyard & Cognitive Debt Registry](screenshots/tab-graveyard-registry.png)
+*The Tab Graveyard & Cognitive Debt Registry dashboard tracking liquidated souls, hours squandered, lethal equations, and historical obituary cards.*
+
+# Diagrams
 ```
 [ User Visits Unprotected Tab ] 
                │
@@ -88,6 +99,7 @@ For Software:
                                        ▼
                        [ Saved in Tab Graveyard Registry ]
 ```
+*Full system lifecycle from auto-interception through math cadence decay, focus trap deflection, Russian Tab Roulette cycle, and permanent obituary logging.*
 
 ---
 
