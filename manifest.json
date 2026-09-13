@@ -1,12 +1,13 @@
 {
   "manifest_version": 3,
   "name": "Anti-Procrastination Tab Executioner",
-  "version": "4.7.0",
-  "description": "Tactical Cyberpunk Interceptor with Persistent Tab Graveyard, Obituary Analytics, and Zero-Redemption Auto-Purge!",
+  "version": "4.8.0",
+  "description": "Tactical Cyberpunk Interceptor with Russian Tab Roulette Engine, Decelerating Slot-Machine Liquidation, and Persistent Obituary Registry!",
   "permissions": [
     "tabs",
     "activeTab",
-    "storage"
+    "storage",
+    "tts"
   ],
   "options_page": "graveyard.html",
   "background": {

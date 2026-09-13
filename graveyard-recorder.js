@@ -85,6 +85,7 @@
     const wasCamouflaged = Boolean(casualtyInfo.wasCamouflaged);
     const streakAtDeath = typeof casualtyInfo.streak === 'number' ? casualtyInfo.streak : 0;
     const timeAliveEstimateMinutes = calculateDebtMinutes(streakAtDeath);
+    const executionMode = casualtyInfo.executionMode || 'DIRECT';
 
     const casualtyRecord = {
       id: `cas_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
@@ -98,7 +99,8 @@
       tierAtDeath,
       wasCamouflaged,
       timeAliveEstimateMinutes,
-      streakAtDeath
+      streakAtDeath,
+      executionMode
     };
 
     if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {

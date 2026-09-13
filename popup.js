@@ -1,6 +1,6 @@
 /**
- * Anti-Procrastination Tab Executioner (v4.7.0)
- * Terminal Interceptor GUI Controller & Tab Graveyard Registry
+ * Anti-Procrastination Tab Executioner (v4.8.0)
+ * Terminal Interceptor GUI Controller, Russian Roulette Engine & Tab Graveyard Registry
  */
 
 // =============================================================================
@@ -93,6 +93,9 @@ function initDOMReferences() {
     statusMessage: document.getElementById('status-message'),
     modeToggleBtn: document.getElementById('mode-toggle-btn'),
     modeLabel: document.getElementById('mode-label'),
+    rouletteModeBtn: document.getElementById('roulette-mode-btn'),
+    rouletteModeLabel: document.getElementById('roulette-mode-label'),
+    rouletteRiskBanner: document.getElementById('roulette-risk-banner'),
     openGraveyardBtn: document.getElementById('open-graveyard-btn'),
     inputWrapper: document.getElementById('input-wrapper'),
     answerForm: document.getElementById('answer-form'),
@@ -100,6 +103,9 @@ function initDOMReferences() {
     
     // Shame Screen & Liquidation Overlay Elements
     shameOverlay: document.getElementById('shame-overlay'),
+    rouletteStatusBadge: document.getElementById('roulette-status-badge'),
+    shameObituaryCard: document.getElementById('shame-obituary-card'),
+    obituaryHeaderLabel: document.getElementById('obituary-header-label'),
     deceasedTabTitle: document.getElementById('deceased-tab-title'),
     deceasedTabDomain: document.getElementById('deceased-tab-domain'),
     lethalEquationRecap: document.getElementById('lethal-equation-recap'),
@@ -275,6 +281,37 @@ function updateModeDisplay() {
     if (dom.modeLabel) dom.modeLabel.textContent = 'ALL TABS';
   } else {
     if (dom.modeLabel) dom.modeLabel.textContent = 'SOCIAL ONLY';
+  }
+}
+
+function updateRouletteUI(mode) {
+  if (!dom.rouletteModeBtn || !dom.rouletteModeLabel) return;
+  if (mode === 'ROULETTE') {
+    dom.rouletteModeBtn.classList.add('roulette-active');
+    dom.rouletteModeLabel.textContent = '🎲 ROULETTE';
+    if (window.TabRoulette) {
+      window.TabRoulette.queryCandidateTabs((tabs) => {
+        if (dom.rouletteRiskBanner) {
+          dom.rouletteRiskBanner.textContent = `MODE: RUSSIAN ROULETTE [${tabs.length} TABS AT RISK]`;
+          dom.rouletteRiskBanner.classList.remove('hidden');
+        }
+      });
+    }
+  } else {
+    dom.rouletteModeBtn.classList.remove('roulette-active');
+    dom.rouletteModeLabel.textContent = '🎯 DIRECT';
+    if (dom.rouletteRiskBanner) {
+      dom.rouletteRiskBanner.classList.add('hidden');
+    }
+  }
+}
+
+function toggleRouletteMode() {
+  if (window.TabRoulette) {
+    window.TabRoulette.toggleExecutionMode((newMode) => {
+      updateRouletteUI(newMode);
+      setStatus(`TARGETING ARMED: ${newMode === 'ROULETTE' ? 'RUSSIAN TAB ROULETTE' : 'DIRECT EXECUTION'}`, 'info');
+    });
   }
 }
 
@@ -495,6 +532,8 @@ function handleExecutionAndShameScreen() {
   // 1. Reset streak in storage immediately so future launches always start fresh at Tier 1
   resetSessionState();
 
+  const isRoulette = window.TabRoulette && window.TabRoulette.getMode() === 'ROULETTE';
+
   // 2. Query target tab from storage & background service worker
   if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
     chrome.storage.local.get(['targetTabId', 'targetTabInfo'], (res) => {
@@ -528,24 +567,81 @@ function handleExecutionAndShameScreen() {
         }
       }
 
-      // Log obituary record to Tab Graveyard & Cognitive Debt Registry
-      if (window.GraveyardRecorder) {
-        const tierLabel = dom.tierText ? dom.tierText.textContent : `TIER ${currentProblem.tierLevel || 1}`;
-        window.GraveyardRecorder.recordCasualty({
-          title: deceasedTitle,
-          url: deceasedUrl,
-          domain: deceasedDomain,
-          fatalEquation: currentProblem.displayString,
-          userAnswer: lastEnteredValue,
-          correctAnswer: currentProblem.solution,
-          tierAtDeath: tierLabel,
-          wasCamouflaged: Boolean(currentProblem.isCamouflaged),
-          streak: streakCounter
-        });
+      // Populate Base Shame Screen DOM
+      populateShameScreen(deceasedTitle, deceasedDomain);
+
+      // 3. Start 7-second multi-oscillator harassment siren
+      if (window.AudioHarassment) {
+        window.AudioHarassment.startAcousticHarassmentSiren();
       }
 
-      // Populate Shame Screen DOM
-      populateShameScreen(deceasedTitle, deceasedDomain);
+      // 4. Show Shame Screen Overlay
+      if (dom.shameOverlay) {
+        dom.shameOverlay.classList.remove('hidden');
+      }
+
+      if (isRoulette) {
+        if (dom.obituaryHeaderLabel) dom.obituaryHeaderLabel.textContent = 'RUSSIAN ROULETTE CHAMBER';
+        startLiquidationCountdown(true);
+
+        window.TabRoulette.startRouletteSequence({
+          titleElement: dom.deceasedTabTitle,
+          domainElement: dom.deceasedTabDomain,
+          statusBadgeElement: dom.rouletteStatusBadge,
+          obituaryCardElement: dom.shameObituaryCard,
+          fallbackTargetTab: { id: pendingTargetTabId, title: deceasedTitle, url: deceasedUrl },
+          onVictimLocked: (victimTab) => {
+            if (victimTab && victimTab.id) {
+              pendingTargetTabId = victimTab.id;
+            }
+          },
+          onComplete: (victimTab) => {
+            const finalVictim = victimTab || { id: pendingTargetTabId, title: deceasedTitle, url: deceasedUrl };
+            window.TabRoulette.terminateVictimTab(finalVictim, (success, killedTab) => {
+              const actualKilled = killedTab || finalVictim;
+              if (window.GraveyardRecorder) {
+                const tierLabel = dom.tierText ? dom.tierText.textContent : `TIER ${currentProblem.tierLevel || 1}`;
+                let victimDomain = 'web.page';
+                try { victimDomain = new URL(actualKilled.url).hostname; } catch { victimDomain = actualKilled.url || 'browser-tab'; }
+                window.GraveyardRecorder.recordCasualty({
+                  title: actualKilled.title || 'Sacrificed Tab',
+                  url: actualKilled.url || 'https://web.page',
+                  domain: victimDomain,
+                  fatalEquation: currentProblem.displayString,
+                  userAnswer: lastEnteredValue,
+                  correctAnswer: currentProblem.solution,
+                  tierAtDeath: tierLabel,
+                  wasCamouflaged: Boolean(currentProblem.isCamouflaged),
+                  streak: streakCounter,
+                  executionMode: 'ROULETTE'
+                }, () => {
+                  window.close();
+                });
+              } else {
+                window.close();
+              }
+            });
+          }
+        });
+      } else {
+        // DIRECT MODE: Log casualty and run standard countdown
+        if (window.GraveyardRecorder) {
+          const tierLabel = dom.tierText ? dom.tierText.textContent : `TIER ${currentProblem.tierLevel || 1}`;
+          window.GraveyardRecorder.recordCasualty({
+            title: deceasedTitle,
+            url: deceasedUrl,
+            domain: deceasedDomain,
+            fatalEquation: currentProblem.displayString,
+            userAnswer: lastEnteredValue,
+            correctAnswer: currentProblem.solution,
+            tierAtDeath: tierLabel,
+            wasCamouflaged: Boolean(currentProblem.isCamouflaged),
+            streak: streakCounter,
+            executionMode: 'DIRECT'
+          });
+        }
+        startLiquidationCountdown(false);
+      }
     });
   } else {
     // Local / fallback recording
@@ -559,24 +655,14 @@ function handleExecutionAndShameScreen() {
         correctAnswer: currentProblem.solution,
         tierAtDeath: 'TIER 1 // WARMUP',
         wasCamouflaged: Boolean(currentProblem.isCamouflaged),
-        streak: streakCounter
+        streak: streakCounter,
+        executionMode: isRoulette ? 'ROULETTE' : 'DIRECT'
       });
     }
     populateShameScreen('Test Browser Tab', 'example.com');
+    if (dom.shameOverlay) dom.shameOverlay.classList.remove('hidden');
+    startLiquidationCountdown(false);
   }
-
-  // 3. Start 7-second multi-oscillator harassment siren
-  if (window.AudioHarassment) {
-    window.AudioHarassment.startAcousticHarassmentSiren();
-  }
-
-  // 4. Show Shame Screen Overlay
-  if (dom.shameOverlay) {
-    dom.shameOverlay.classList.remove('hidden');
-  }
-
-  // 5. Start 7-second mandatory liquidation countdown
-  startLiquidationCountdown();
 }
 
 function populateShameScreen(title, domain) {
@@ -618,8 +704,9 @@ function populateShameScreen(title, domain) {
 
 /**
  * Executes the mandatory 7-second liquidation countdown followed by auto-purge & window close
+ * @param {boolean} [isHandledByRoulette=false]
  */
-function startLiquidationCountdown() {
+function startLiquidationCountdown(isHandledByRoulette = false) {
   let liquidationSeconds = CONFIG.LOCKOUT_SECONDS || 7;
   isLockoutActive = true;
 
@@ -650,20 +737,22 @@ function startLiquidationCountdown() {
       // Ensure storage is fully reset
       resetSessionState();
 
-      // Mandatory Auto-Purge: Destroy target tab and close execution window
-      setTimeout(() => {
-        if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
-          chrome.runtime.sendMessage({ type: 'TERMINATE_TARGET_TAB', targetTabId: pendingTargetTabId }, () => {
+      if (!isHandledByRoulette) {
+        // Mandatory Auto-Purge: Destroy direct target tab and close execution window
+        setTimeout(() => {
+          if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+            chrome.runtime.sendMessage({ type: 'TERMINATE_TARGET_TAB', targetTabId: pendingTargetTabId }, () => {
+              window.close();
+            });
+          } else if (pendingTargetTabId && typeof chrome !== 'undefined' && chrome.tabs) {
+            chrome.tabs.remove(pendingTargetTabId, () => {
+              window.close();
+            });
+          } else {
             window.close();
-          });
-        } else if (pendingTargetTabId && typeof chrome !== 'undefined' && chrome.tabs) {
-          chrome.tabs.remove(pendingTargetTabId, () => {
-            window.close();
-          });
-        } else {
-          window.close();
-        }
-      }, 250);
+          }
+        }, 250);
+      }
     } else {
       if (dom.liquidationTimer) {
         dom.liquidationTimer.textContent = `0${liquidationSeconds}s`;
@@ -723,6 +812,13 @@ document.addEventListener('DOMContentLoaded', () => {
   initDOMReferences();
   updateModeDisplay();
 
+  // Load and sync Russian Roulette execution mode
+  if (window.TabRoulette) {
+    window.TabRoulette.loadExecutionMode((mode) => {
+      updateRouletteUI(mode);
+    });
+  }
+
   // Retrieve initial target tab info if launched via background window controller
   if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
     chrome.runtime.sendMessage({ type: 'GET_TARGET_TAB' }, (res) => {
@@ -750,6 +846,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (dom.modeToggleBtn) {
     dom.modeToggleBtn.addEventListener('click', toggleTargetMode);
+  }
+
+  if (dom.rouletteModeBtn) {
+    dom.rouletteModeBtn.addEventListener('click', toggleRouletteMode);
   }
 
   function openGraveyardDashboard() {

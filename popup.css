@@ -154,6 +154,33 @@ html, body {
   transform: scale(1.08);
 }
 
+.roulette-chip {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: var(--accent-amber);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.roulette-chip:hover {
+  background: rgba(245, 158, 11, 0.25);
+  border-color: var(--accent-amber);
+  box-shadow: 0 0 10px var(--accent-amber-glow);
+}
+
+.roulette-chip.roulette-active {
+  background: rgba(255, 46, 84, 0.2);
+  border-color: #ff2e54;
+  color: #ff859c;
+  box-shadow: 0 0 10px rgba(255, 46, 84, 0.4);
+  animation: alertPulse 0.6s infinite alternate;
+}
+
 .mode-chip {
   background: rgba(6, 182, 212, 0.1);
   border: 1px solid rgba(6, 182, 212, 0.3);
@@ -170,6 +197,20 @@ html, body {
 .mode-chip:hover {
   background: rgba(6, 182, 212, 0.2);
   border-color: var(--accent-cyan);
+}
+
+.hazard-mode-banner {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  color: #fbbf24;
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px dashed rgba(245, 158, 11, 0.5);
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-align: center;
+  animation: alertPulse 0.8s infinite alternate;
 }
 
 .streak-pill {
@@ -715,6 +756,46 @@ body.state-panic .terminal-container {
   color: var(--text-muted);
 }
 
+/* Russian Roulette Chamber Badge */
+.roulette-status-badge {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  padding: 4px 10px;
+  border-radius: 4px;
+  text-align: center;
+  transition: all 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.roulette-status-badge.spinning {
+  color: #fbbf24;
+  background: rgba(245, 158, 11, 0.2);
+  border: 1px dashed #f59e0b;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.4);
+  animation: rouletteSpinPulse 0.2s infinite alternate;
+}
+
+.roulette-status-badge.locked {
+  color: #ffffff;
+  background: rgba(255, 46, 84, 0.3);
+  border: 1px solid #ff2e54;
+  box-shadow: 0 0 18px rgba(255, 46, 84, 0.85);
+  animation: rouletteLockFlash 0.3s infinite alternate;
+}
+
+@keyframes rouletteSpinPulse {
+  0%   { filter: brightness(1); transform: scale(1); }
+  100% { filter: brightness(1.25); transform: scale(1.02); }
+}
+
+@keyframes rouletteLockFlash {
+  0%   { background-color: rgba(255, 46, 84, 0.35); box-shadow: 0 0 14px rgba(255, 46, 84, 0.6); }
+  100% { background-color: rgba(255, 46, 84, 0.7); box-shadow: 0 0 28px rgba(255, 46, 84, 0.95); }
+}
+
 /* Tab Obituary Card */
 .obituary-card {
   background: rgba(20, 10, 16, 0.8);
@@ -725,6 +806,28 @@ body.state-panic .terminal-container {
   flex-direction: column;
   gap: 2px;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+  transition: all 0.15s ease;
+}
+
+.obituary-card.roulette-shuffling {
+  border-color: #f59e0b;
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.35);
+  filter: contrast(1.1);
+}
+
+.obituary-card.roulette-locked-in {
+  border-color: #ff2e54;
+  background: rgba(35, 8, 14, 0.9);
+  box-shadow: 0 0 24px rgba(255, 46, 84, 0.9);
+  animation: lockInShake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@keyframes lockInShake {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-4px, 2px); }
+  40% { transform: translate(4px, -2px); }
+  60% { transform: translate(-3px, 1px); }
+  80% { transform: translate(3px, -1px); }
 }
 
 .obituary-header {

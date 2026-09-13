@@ -205,6 +205,10 @@
         ? `<div class="sabotage-flag-badge">☣️ VICTIM OF ADVERSARIAL SABOTAGE (CAMOUFLAGED PHANTOM TERM)</div>`
         : '';
 
+      const modeTag = record.executionMode === 'ROULETTE'
+        ? `<span class="mode-tag roulette">🎲 ROULETTE</span>`
+        : `<span class="mode-tag direct">🎯 DIRECT</span>`;
+
       const submittedDisplay = isTimeout
         ? `<span class="highlight-entry">[TIMEOUT // NO INPUT]</span>`
         : `<span class="highlight-entry">${record.userAnswer}</span>`;
@@ -217,7 +221,8 @@
               <span class="death-timestamp">${formattedDate}</span>
             </div>
             <div class="card-meta-tags">
-              <span class="debt-badge">+${debtMins}m COGNITIVE DEBT</span>
+              ${modeTag}
+              <span class="debt-badge">+${debtMins}m DEBT</span>
               <span class="streak-tag">STREAK: ${String(streak).padStart(2, '0')}</span>
             </div>
           </div>
