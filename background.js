@@ -157,6 +157,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       })();
       return true;
 
+    case 'OPEN_GRAVEYARD':
+      chrome.tabs.create({ url: chrome.runtime.getURL('graveyard.html') }, (tab) => {
+        if (tab && tab.windowId) {
+          chrome.windows.update(tab.windowId, { focused: true });
+        }
+      });
+      sendResponse({ status: 'ok' });
+      break;
+
     case 'CLOSE_EXECUTION_WINDOW':
       isSessionActive = false;
       if (activeExecutionWindowId !== null) {
@@ -174,13 +183,23 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 // =============================================================================
-// 3. Aggressive Window Focus Guard
+// 3. Aggressive Window Focus Guard (With Graveyard Exception)
 // =============================================================================
 
-chrome.windows.onFocusChanged.addListener((windowId) => {
+chrome.windows.onFocusChanged.addListener(async (windowId) => {
   if (isSessionActive && activeExecutionWindowId !== null) {
-    // If focus shifted to any other window while the math session is active, yank focus back
     if (windowId !== activeExecutionWindowId && windowId !== chrome.windows.WINDOW_ID_NONE) {
+      try {
+        const win = await chrome.windows.get(windowId, { populate: true });
+        const activeTab = win?.tabs?.find((t) => t.active);
+        if (activeTab && activeTab.url && activeTab.url.includes('graveyard.html')) {
+          // User is intentionally reviewing the Tab Graveyard, permit focus
+          return;
+        }
+      } catch (e) {
+        // Ignore
+      }
+
       chrome.windows.update(activeExecutionWindowId, { focused: true, drawAttention: true }, () => {
         if (chrome.runtime.lastError) {
           // Window may be closed

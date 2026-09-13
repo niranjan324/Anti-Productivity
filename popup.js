@@ -56,6 +56,7 @@ let timeLeft = 22;
 let countdownTimer = null;
 let lockoutTimer = null;
 let isLockoutActive = false;
+let isExemptFromEscape = false;
 let pendingTargetTabId = null;
 let pendingShouldTerminate = false;
 let lastEnteredValue = '[TIMEOUT]';
@@ -106,6 +107,7 @@ function initDOMReferences() {
     shameStreakDisplay: document.getElementById('shame-streak-display'),
     shameRatingDisplay: document.getElementById('shame-rating-display'),
     shameQuoteDisplay: document.getElementById('shame-quote-display'),
+    shameGraveyardBtn: document.getElementById('shame-graveyard-btn'),
     liquidationHud: document.getElementById('liquidation-hud'),
     liquidationTimer: document.getElementById('liquidation-timer')
   };
@@ -403,7 +405,7 @@ function transitionTo(nextState) {
  * Handles attempted user evasion / window blur during active countdown
  */
 function handleEscapeAttempt() {
-  if (currentState !== GameStates.ACTIVE || isLockoutActive) return;
+  if (currentState !== GameStates.ACTIVE || isLockoutActive || isExemptFromEscape) return;
 
   const penalty = CONFIG.ESCAPE_PENALTY_SECONDS || 4;
   timeLeft = Math.max(0, timeLeft - penalty);
@@ -750,15 +752,42 @@ document.addEventListener('DOMContentLoaded', () => {
     dom.modeToggleBtn.addEventListener('click', toggleTargetMode);
   }
 
+  function openGraveyardDashboard() {
+    isExemptFromEscape = true;
+    setTimeout(() => { isExemptFromEscape = false; }, 3000);
+
+    if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+      chrome.runtime.sendMessage({ type: 'OPEN_GRAVEYARD' }, (res) => {
+        if (chrome.runtime.lastError || !res) {
+          if (chrome.tabs && chrome.tabs.create) {
+            chrome.tabs.create({ url: chrome.runtime.getURL('graveyard.html') });
+          } else if (chrome.runtime.openOptionsPage) {
+            chrome.runtime.openOptionsPage();
+          } else {
+            window.open('graveyard.html', '_blank');
+          }
+        }
+      });
+    } else if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.create) {
+      chrome.tabs.create({ url: chrome.runtime.getURL('graveyard.html') });
+    } else if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.openOptionsPage) {
+      chrome.runtime.openOptionsPage();
+    } else {
+      window.open('graveyard.html', '_blank');
+    }
+  }
+
   if (dom.openGraveyardBtn) {
-    dom.openGraveyardBtn.addEventListener('click', () => {
-      if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.create) {
-        chrome.tabs.create({ url: chrome.runtime.getURL('graveyard.html') });
-      } else if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.openOptionsPage) {
-        chrome.runtime.openOptionsPage();
-      } else {
-        window.open('graveyard.html', '_blank');
-      }
+    dom.openGraveyardBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openGraveyardDashboard();
+    });
+  }
+
+  if (dom.shameGraveyardBtn) {
+    dom.shameGraveyardBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openGraveyardDashboard();
     });
   }
 
@@ -769,9 +798,12 @@ document.addEventListener('DOMContentLoaded', () => {
     dom.submitBtn.addEventListener('click', handleInputEvaluation);
   }
 
-  // Pointer Capture & Full-Window Shield
+  // Pointer Capture & Full-Window Shield (ignores interactive UI elements)
   if (dom.mainContainer) {
     dom.mainContainer.addEventListener('pointerdown', (e) => {
+      if (e.target.closest('button, input, form, a, [role="button"], .mode-chip, .tier-ribbon, .graveyard-btn, .shame-graveyard-link')) {
+        return;
+      }
       try {
         if (dom.mainContainer.setPointerCapture) {
           dom.mainContainer.setPointerCapture(e.pointerId);

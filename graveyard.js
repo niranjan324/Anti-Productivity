@@ -406,5 +406,14 @@
     initDOM();
     bindEvents();
     refreshDashboard();
+
+    // Real-time synchronization when tabs are liquidated
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
+      chrome.storage.onChanged.addListener((changes, area) => {
+        if (area === 'local' && (changes.tab_graveyard_records || changes.graveyard_stats)) {
+          refreshDashboard();
+        }
+      });
+    }
   });
 })();

@@ -889,6 +889,31 @@ body.state-panic .terminal-container {
   border-radius: 0 4px 4px 0;
 }
 
+.shame-graveyard-link {
+  background: rgba(255, 46, 84, 0.18);
+  border: 1px solid rgba(255, 46, 84, 0.5);
+  color: #ffffff;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  text-align: center;
+  transition: all 0.2s ease;
+  width: 100%;
+  display: block;
+}
+
+.shame-graveyard-link:hover {
+  background: rgba(255, 46, 84, 0.35);
+  border-color: #ff2e54;
+  box-shadow: 0 0 12px var(--accent-crimson-glow);
+  transform: translateY(-1px);
+}
+
 /* ==========================================================================
    Zero-Redemption Mandatory Liquidation HUD
    ========================================================================== */
