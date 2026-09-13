@@ -92,6 +92,11 @@ For Software:
 ---
 
 ### Project Demo
+# Video
+[Watch Project Demo Video on Google Drive](https://drive.google.com/drive/folders/1s0_GdIhSs685IxyQaxE7kOWlp-UlTPHc)
+
+*Demonstration of automatic tab interception, unescapable window lockdown, procedural math stress gameplay, 7-second acoustic harassment siren, Russian Tab Roulette liquidation, and the persistent Tab Graveyard dashboard.*
+
 # Features Demonstrated
 - **Unescapable Window Lockdown:** Programmatic window pinning, pointer capture shield, and blur punishment.
 - **Russian Tab Roulette:** 7-second decelerating slot machine cycling across open tabs with mechanical tick sounds and TTS voice announcement.
