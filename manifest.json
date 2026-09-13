@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Anti-Procrastination Tab Executioner",
-  "version": "4.8.0",
-  "description": "Tactical Cyberpunk Interceptor with Russian Tab Roulette Engine, Decelerating Slot-Machine Liquidation, and Persistent Obituary Registry!",
+  "version": "4.9.0",
+  "description": "Tactical Cyberpunk Interceptor with Automatic Tab Interception, Russian Tab Roulette Engine, Decelerating Slot-Machine Liquidation, and Persistent Obituary Registry!",
   "permissions": [
     "tabs",
     "activeTab",

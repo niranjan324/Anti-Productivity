@@ -1,5 +1,5 @@
 /**
- * Anti-Procrastination Tab Executioner (v4.8.0)
+ * Anti-Procrastination Tab Executioner (v4.9.0)
  * Terminal Interceptor GUI Controller, Russian Roulette Engine & Tab Graveyard Registry
  */
 

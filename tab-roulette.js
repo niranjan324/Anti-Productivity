@@ -1,5 +1,5 @@
 /**
- * Anti-Procrastination Tab Executioner (v4.8.0)
+ * Anti-Procrastination Tab Executioner (v4.9.0)
  * tab-roulette.js - Russian Tab Roulette Engine & Decelerating Slot-Machine Liquidation
  */
 

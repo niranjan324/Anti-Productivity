@@ -1,18 +1,48 @@
 /**
- * Anti-Procrastination Tab Executioner (v4.4.0)
- * background.js - Window Lockdown Controller, Focus Trap, and Defiance Engine
+ * Anti-Procrastination Tab Executioner (v4.9.0)
+ * background.js - Window Lockdown Controller, Focus Trap, Auto-Interception, and Defiance Engine
  */
 
 let activeExecutionWindowId = null;
 let targetTabId = null;
 let targetTabInfo = { title: 'Distracting Tab', url: 'web.page' };
 let isSessionActive = false;
+let isSpawning = false;
+
+const PROTECTED_PROTOCOLS = [
+  'chrome://',
+  'chrome-extension://',
+  'edge://',
+  'about:',
+  'devtools://',
+  'chrome-search://',
+  'chrome-untrusted://',
+  'view-source:'
+];
+
+/**
+ * Checks whether a given URL is a browser-protected page or empty scheme.
+ * @param {string} url
+ * @returns {boolean}
+ */
+function isProtectedUrl(url) {
+  if (!url || typeof url !== 'string') return true;
+  const trimmed = url.trim().toLowerCase();
+  if (trimmed === '' || trimmed === 'about:blank') return true;
+  return PROTECTED_PROTOCOLS.some((proto) => trimmed.startsWith(proto));
+}
 
 // =============================================================================
-// 1. Standalone Panel Window Spawning
+// 1. Standalone Panel Window Spawning & Auto-Interception Engine
 // =============================================================================
 
-chrome.action.onClicked.addListener(async (tab) => {
+/**
+ * Programmatically spawns the unescapable executioner popup window targeting an unprotected tab
+ * @param {chrome.tabs.Tab} tab
+ */
+async function launchExecutionWindow(tab) {
+  if (isSpawning) return;
+
   // 1. Check if an execution window is already open
   if (activeExecutionWindowId !== null) {
     try {
@@ -22,45 +52,35 @@ chrome.action.onClicked.addListener(async (tab) => {
         return;
       }
     } catch (e) {
-      // Window no longer exists, proceed to create new
       activeExecutionWindowId = null;
     }
   }
 
-  // 2. Capture target tab details from the active browser window
-  let targetTab = tab;
-  if (!targetTab || !targetTab.id || (targetTab.url && targetTab.url.startsWith('chrome-extension://'))) {
-    const normalWindows = await chrome.windows.getAll({ populate: true, windowTypes: ['normal'] });
-    if (normalWindows && normalWindows.length > 0) {
-      const focusedWin = normalWindows.find((w) => w.focused) || normalWindows[0];
-      const active = focusedWin?.tabs?.find((t) => t.active);
-      if (active && !active.url.startsWith('chrome-extension://')) {
-        targetTab = active;
-      }
-    }
+  // 2. Validate target tab
+  if (!tab || !tab.id || isProtectedUrl(tab.url || tab.pendingUrl)) {
+    return;
   }
 
-  if (targetTab && targetTab.id && !targetTab.url.startsWith('chrome-extension://')) {
-    targetTabId = targetTab.id;
+  isSpawning = true;
+  try {
+    targetTabId = tab.id;
     targetTabInfo = {
-      title: targetTab.title || 'Untitled Tab',
-      url: targetTab.url || 'browser-tab'
+      title: tab.title || 'Distracting Tab',
+      url: tab.url || 'web.page'
     };
-  }
 
-  // Reset streak state to 0 for a fresh run and persist target info into storage
-  await chrome.storage.local.set({
-    targetTabId,
-    targetTabInfo,
-    savedStreak: 0,
-    isSessionActive: true
-  });
+    isSessionActive = true;
 
-  isSessionActive = true;
+    // Reset streak state to 0 for a fresh run and persist target info into storage
+    await chrome.storage.local.set({
+      targetTabId,
+      targetTabInfo,
+      savedStreak: 0,
+      isSessionActive: true
+    });
 
-  // 3. Spawn dedicated unescapable panel window
-  chrome.windows.create(
-    {
+    // 3. Spawn dedicated unescapable panel window
+    const win = await chrome.windows.create({
       url: 'popup.html',
       type: 'popup',
       width: 360,
@@ -68,13 +88,88 @@ chrome.action.onClicked.addListener(async (tab) => {
       focused: true,
       top: 100,
       left: 100
-    },
-    (win) => {
-      if (win) {
-        activeExecutionWindowId = win.id;
+    });
+
+    if (win) {
+      activeExecutionWindowId = win.id;
+    }
+  } catch (err) {
+    console.warn('Failed to launch execution window:', err);
+    isSessionActive = false;
+  } finally {
+    isSpawning = false;
+  }
+}
+
+// Manual Click Action Trigger
+chrome.action.onClicked.addListener(async (tab) => {
+  let targetTab = tab;
+  if (!targetTab || !targetTab.id || isProtectedUrl(targetTab.url)) {
+    const normalWindows = await chrome.windows.getAll({ populate: true, windowTypes: ['normal'] });
+    if (normalWindows && normalWindows.length > 0) {
+      const focusedWin = normalWindows.find((w) => w.focused) || normalWindows[0];
+      const active = focusedWin?.tabs?.find((t) => t.active);
+      if (active && !isProtectedUrl(active.url)) {
+        targetTab = active;
       }
     }
-  );
+  }
+
+  if (targetTab && !isProtectedUrl(targetTab.url)) {
+    await launchExecutionWindow(targetTab);
+  }
+});
+
+// Auto-Interception on Navigation / URL Update
+chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+  if (!tab || !tab.active) return;
+  if (changeInfo.status !== 'complete' && !changeInfo.url) return;
+  if (isSessionActive || activeExecutionWindowId !== null) return;
+
+  const url = changeInfo.url || tab.url;
+  if (isProtectedUrl(url)) return;
+
+  try {
+    const win = await chrome.windows.get(tab.windowId);
+    if (win && win.type === 'normal') {
+      await launchExecutionWindow(tab);
+    }
+  } catch (e) {
+    // Window inaccessible
+  }
+});
+
+// Auto-Interception on Active Tab Switching
+chrome.tabs.onActivated.addListener(async (activeInfo) => {
+  if (isSessionActive || activeExecutionWindowId !== null) return;
+
+  try {
+    const tab = await chrome.tabs.get(activeInfo.tabId);
+    if (!tab || isProtectedUrl(tab.url || tab.pendingUrl)) return;
+
+    const win = await chrome.windows.get(activeInfo.windowId);
+    if (win && win.type === 'normal') {
+      await launchExecutionWindow(tab);
+    }
+  } catch (e) {
+    // Tab or window inaccessible
+  }
+});
+
+// Reset target tab tracking if closed by user
+chrome.tabs.onRemoved.addListener((closedTabId) => {
+  if (closedTabId === targetTabId) {
+    targetTabId = null;
+  }
+});
+
+// Installation & Initial State Reset
+chrome.runtime.onInstalled.addListener(async () => {
+  await chrome.storage.local.set({
+    isSessionActive: false,
+    targetTabId: null,
+    savedStreak: 0
+  });
 });
 
 // =============================================================================
@@ -135,7 +230,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           if (normalWindows && normalWindows.length > 0) {
             const focusedWin = normalWindows.find((w) => w.focused) || normalWindows[0];
             const active = focusedWin?.tabs?.find((t) => t.active);
-            if (active && !active.url.startsWith('chrome-extension://')) {
+            if (active && !isProtectedUrl(active.url)) {
               tabToKill = active.id;
             }
           }
