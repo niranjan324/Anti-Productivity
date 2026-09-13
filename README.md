@@ -6,8 +6,8 @@
 ### Team Name: Anti-Productivity Syndicate
 
 ### Team Members
-- Team Lead: Niranjan - College of Engineering
-- Member 2: Antigravity - DeepMind Division
+- Team Lead: Niranjan A -Saintgits College of Engineering
+- Member 1: Parvathy M S - Saintgits College of Engineering
 
 ### Project Description
 A ruthless, adversarial Chrome Extension (Manifest V3) that auto-intercepts unprotected browser tabs and holds them hostage in an unescapable cyberpunk lockdown window—forcing users to solve increasingly sadistic mental arithmetic under high-pressure time decay, or face immediate zero-redemption tab liquidation, Russian Tab Roulette, and eternal public shaming in the Tab Graveyard.
@@ -118,8 +118,8 @@ For Software:
 ---
 
 ## Team Contributions
-- **Niranjan:** Project conceptualization, Manifest V3 extension architecture, Russian Tab Roulette mechanics, UI styling, and repository management.
-- **Antigravity:** Procedural math engine design, Web Audio synthesis, auto-interception engine, and persistent obituary registry.
+- **Niranjan A:** Project conceptualization, Manifest V3 extension architecture, Russian Tab Roulette mechanics, UI styling, and repository management.
+- **Parvathy M S:** Procedural math engine design, Web Audio synthesis, auto-interception engine, and persistent obituary registry.
 
 ---
 Made with ❤️ at TinkerHub Useless Projects 
