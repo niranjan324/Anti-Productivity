@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tab Graveyard // Cognitive Debt Registry</title>
+  <link rel="stylesheet" href="graveyard.css">
+</head>
+<body>
+  <!-- Ambient Grid & Scanline Background -->
+  <div class="grid-background"></div>
+  <div class="scanlines"></div>
+  <div class="ambient-glow"></div>
+
+  <!-- Main Dashboard Container -->
+  <div class="dashboard-wrapper">
+    
+    <!-- 1. Top HUD Header -->
+    <header class="morgue-header">
+      <div class="header-branding">
+        <div class="morgue-icon-badge">🪦</div>
+        <div class="branding-text">
+          <h1 class="morgue-title">TAB GRAVEYARD <span class="glitch-accent">//</span> COGNITIVE DEBT REGISTRY</h1>
+          <p class="morgue-subtitle">MEMENTO MORI • OBITUARY LOG OF UNPROXIED DIGITAL DISTRACTIONS</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <div class="export-group">
+          <button type="button" class="action-btn export-btn" id="export-json-btn" title="Download formatted JSON report">
+            <span class="btn-icon">📥</span> EXPORT JSON
+          </button>
+          <button type="button" class="action-btn export-btn" id="export-csv-btn" title="Download formatted CSV report">
+            <span class="btn-icon">📊</span> EXPORT CSV
+          </button>
+        </div>
+        <button type="button" class="action-btn purge-btn" id="open-purge-modal-btn" title="Clear all deceased tab records">
+          <span class="btn-icon">☣️</span> PURGE CEMETERY
+        </button>
+      </div>
+    </header>
+
+    <!-- 2. Hero KPI Metric Cards -->
+    <section class="kpi-banner">
+      
+      <!-- Card 1: Souls Purged -->
+      <div class="kpi-card kpi-crimson">
+        <div class="kpi-corner tl"></div>
+        <div class="kpi-corner tr"></div>
+        <div class="kpi-header">
+          <span class="kpi-tag">TOTAL LIQUIDATIONS</span>
+          <span class="kpi-icon">💀</span>
+        </div>
+        <div class="kpi-value-wrapper">
+          <span class="kpi-value" id="kpi-souls-purged">000</span>
+          <span class="kpi-unit">SOULS</span>
+        </div>
+        <div class="kpi-footer">TERMINATED WITH ZERO REDEMPTION</div>
+      </div>
+
+      <!-- Card 2: Cognitive Debt -->
+      <div class="kpi-card kpi-amber">
+        <div class="kpi-corner tl"></div>
+        <div class="kpi-corner tr"></div>
+        <div class="kpi-header">
+          <span class="kpi-tag">ESTIMATED TIME SQUANDERED</span>
+          <span class="kpi-icon">⏳</span>
+        </div>
+        <div class="kpi-value-wrapper">
+          <span class="kpi-value" id="kpi-cognitive-debt">0.0</span>
+          <span class="kpi-unit" id="kpi-debt-unit">HOURS</span>
+        </div>
+        <div class="kpi-footer" id="kpi-debt-subtitle">0 MINUTES OF LIFE RECLAIMED</div>
+      </div>
+
+      <!-- Card 3: Deadliest Tier -->
+      <div class="kpi-card kpi-cyan">
+        <div class="kpi-corner tl"></div>
+        <div class="kpi-corner tr"></div>
+        <div class="kpi-header">
+          <span class="kpi-tag">LETHAL ARITHMETIC TIER</span>
+          <span class="kpi-icon">🧠</span>
+        </div>
+        <div class="kpi-value-wrapper">
+          <span class="kpi-value tier-title" id="kpi-deadliest-tier">TIER 1</span>
+        </div>
+        <div class="kpi-footer" id="kpi-tier-detail">0 FATAL CALCULATION FAILURES</div>
+      </div>
+
+      <!-- Card 4: Sabotage / Camouflage Ratio -->
+      <div class="kpi-card kpi-purple">
+        <div class="kpi-corner tl"></div>
+        <div class="kpi-corner tr"></div>
+        <div class="kpi-header">
+          <span class="kpi-tag">PHANTOM SABOTAGES</span>
+          <span class="kpi-icon">☣️</span>
+        </div>
+        <div class="kpi-value-wrapper">
+          <span class="kpi-value" id="kpi-sabotage-count">0</span>
+          <span class="kpi-unit">VICTIMS</span>
+        </div>
+        <div class="kpi-footer">10% CAMOUFLAGE TRAP CASUALTIES</div>
+      </div>
+
+    </section>
+
+    <!-- 3. Filter & Search Controls -->
+    <section class="filter-controls-bar">
+      <div class="search-box-wrapper">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="graveyard-search" class="search-input" placeholder="Search by domain, title, or equation...">
+      </div>
+
+      <div class="filter-pills-row">
+        <button type="button" class="filter-pill active" data-filter="all">ALL CASUALTIES (<span id="count-all">0</span>)</button>
+        <button type="button" class="filter-pill" data-filter="sabotage">SABOTAGED (<span id="count-sabotage">0</span>)</button>
+        <button type="button" class="filter-pill" data-filter="timeout">TIMED OUT (<span id="count-timeout">0</span>)</button>
+        <button type="button" class="filter-pill" data-filter="tier-apex">APEX TIER (<span id="count-apex">0</span>)</button>
+      </div>
+    </section>
+
+    <!-- 4. Tombstone Feed & Empty State -->
+    <main class="tombstone-section">
+      
+      <!-- Empty State Banner -->
+      <div class="empty-state-card hidden" id="empty-state">
+        <div class="empty-tombstone-icon">🪦</div>
+        <h2 class="empty-title">THE CEMETERY IS EMPTY</h2>
+        <p class="empty-message">
+          Either you are a mental math phenom with unyielding discipline, or you haven't started procrastinating yet.
+        </p>
+        <div class="empty-hint">
+          Open a distracting website to challenge the Executioner.
+        </div>
+      </div>
+
+      <!-- Scrollable Tombstone Feed Container -->
+      <div class="tombstone-feed" id="tombstone-feed">
+        <!-- Rendered dynamically via graveyard.js -->
+      </div>
+
+    </main>
+
+    <!-- Footer Bar -->
+    <footer class="morgue-footer">
+      <div class="footer-status">
+        <span class="status-indicator-dot"></span>
+        <span>CORONER ARCHIVE SYNCHRONIZED WITH LOCAL CHROME STORAGE</span>
+      </div>
+      <div class="footer-version">ANTI-PROCRASTINATION TAB EXECUTIONER v4.7.0</div>
+    </footer>
+
+  </div>
+
+  <!-- 5. Purge Confirmation Modal -->
+  <div class="modal-backdrop hidden" id="purge-modal">
+    <div class="modal-dialog">
+      <div class="modal-hazard-stripe"></div>
+      <div class="modal-content">
+        <div class="modal-icon">☣️</div>
+        <h3 class="modal-title">FORGIVE COGNITIVE DEBT?</h3>
+        <p class="modal-message">
+          Are you sure you want to forgive yourself and erase the obituary record of all liquidated tabs?
+        </p>
+        <div class="modal-warning">
+          ⚠️ WARNING: This will permanently wipe all historical casualties and reset your accumulated cognitive debt counter to zero.
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="modal-btn btn-cancel" id="modal-cancel-btn">CANCEL (KEEP GUILT)</button>
+          <button type="button" class="modal-btn btn-confirm-purge" id="modal-confirm-purge-btn">CONFIRM PURGE (ERASE MEMORY)</button>
+        </div>
+      </div>
+      <div class="modal-hazard-stripe"></div>
+    </div>
+  </div>
+
+  <script src="graveyard-recorder.js"></script>
+  <script src="graveyard.js"></script>
+</body>
+</html>

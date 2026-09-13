@@ -33,10 +33,10 @@ function startAcousticHarassmentSiren() {
     const duration = 7.0;
     const sustainEnd = 6.3;
 
-    // Master Gain Node for volume envelope & anti-clipping (subdued to 0.11 to prioritize TTS voice)
+    // Master Gain Node for volume envelope & anti-clipping
     const masterGain = ctx.createGain();
-    masterGain.gain.setValueAtTime(0.11, now);
-    masterGain.gain.setValueAtTime(0.11, now + sustainEnd);
+    masterGain.gain.setValueAtTime(0.28, now);
+    masterGain.gain.setValueAtTime(0.28, now + sustainEnd);
     masterGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
     masterGain.connect(ctx.destination);
 

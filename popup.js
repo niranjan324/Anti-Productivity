@@ -1,6 +1,6 @@
 /**
- * Anti-Procrastination Tab Executioner (v4.6.0)
- * Terminal Interceptor GUI Controller & Synthetic TTS Gaslighting Engine
+ * Anti-Procrastination Tab Executioner (v4.7.0)
+ * Terminal Interceptor GUI Controller & Tab Graveyard Registry
  */
 
 // =============================================================================
@@ -59,7 +59,6 @@ let isLockoutActive = false;
 let pendingTargetTabId = null;
 let pendingShouldTerminate = false;
 let lastEnteredValue = '[TIMEOUT]';
-let hasPanickedThisRound = false;
 let currentProblem = {
   displayString: '',
   solution: 0,
@@ -93,6 +92,7 @@ function initDOMReferences() {
     statusMessage: document.getElementById('status-message'),
     modeToggleBtn: document.getElementById('mode-toggle-btn'),
     modeLabel: document.getElementById('mode-label'),
+    openGraveyardBtn: document.getElementById('open-graveyard-btn'),
     inputWrapper: document.getElementById('input-wrapper'),
     answerForm: document.getElementById('answer-form'),
     statusDot: document.getElementById('status-dot'),
@@ -145,7 +145,6 @@ function playSuccessChime() {
 // =============================================================================
 
 function generateAndRenderProblem(streak) {
-  hasPanickedThisRound = false;
   currentProblem = window.MathEngine.generateExponentialProblem(streak);
 
   if (currentProblem.tierLevel === 5 && currentProblem.displayString.includes('det |')) {
@@ -321,13 +320,6 @@ function startTimerLoop() {
     }
 
     timeLeft -= 1;
-
-    if (timeLeft <= 5 && timeLeft > 0 && !hasPanickedThisRound) {
-      hasPanickedThisRound = true;
-      if (window.VoiceEngine) {
-        window.VoiceEngine.speak('TIME_PANIC');
-      }
-    }
 
     if (timeLeft <= 0) {
       timeLeft = 0;
@@ -506,9 +498,11 @@ function handleExecutionAndShameScreen() {
     chrome.storage.local.get(['targetTabId', 'targetTabInfo'], (res) => {
       let deceasedTitle = 'Distracting Browser Tab';
       let deceasedDomain = 'web.page';
+      let deceasedUrl = 'https://distraction.target';
 
       if (res && res.targetTabInfo) {
         deceasedTitle = res.targetTabInfo.title || 'Distracting Tab';
+        deceasedUrl = res.targetTabInfo.url || 'https://distraction.target';
         try {
           deceasedDomain = new URL(res.targetTabInfo.url).hostname || res.targetTabInfo.url;
         } catch {
@@ -532,10 +526,40 @@ function handleExecutionAndShameScreen() {
         }
       }
 
+      // Log obituary record to Tab Graveyard & Cognitive Debt Registry
+      if (window.GraveyardRecorder) {
+        const tierLabel = dom.tierText ? dom.tierText.textContent : `TIER ${currentProblem.tierLevel || 1}`;
+        window.GraveyardRecorder.recordCasualty({
+          title: deceasedTitle,
+          url: deceasedUrl,
+          domain: deceasedDomain,
+          fatalEquation: currentProblem.displayString,
+          userAnswer: lastEnteredValue,
+          correctAnswer: currentProblem.solution,
+          tierAtDeath: tierLabel,
+          wasCamouflaged: Boolean(currentProblem.isCamouflaged),
+          streak: streakCounter
+        });
+      }
+
       // Populate Shame Screen DOM
       populateShameScreen(deceasedTitle, deceasedDomain);
     });
   } else {
+    // Local / fallback recording
+    if (window.GraveyardRecorder) {
+      window.GraveyardRecorder.recordCasualty({
+        title: 'Test Browser Tab',
+        url: 'https://example.com/distraction',
+        domain: 'example.com',
+        fatalEquation: currentProblem.displayString,
+        userAnswer: lastEnteredValue,
+        correctAnswer: currentProblem.solution,
+        tierAtDeath: 'TIER 1 // WARMUP',
+        wasCamouflaged: Boolean(currentProblem.isCamouflaged),
+        streak: streakCounter
+      });
+    }
     populateShameScreen('Test Browser Tab', 'example.com');
   }
 
@@ -588,11 +612,6 @@ function populateShameScreen(title, domain) {
     const randomQuote = MOCKERY_QUOTES[Math.floor(Math.random() * MOCKERY_QUOTES.length)];
     dom.shameQuoteDisplay.textContent = randomQuote;
   }
-
-  // Auditory Psychological Harassment: Clinical Robotic Eulogy
-  if (window.VoiceEngine) {
-    window.VoiceEngine.speak('LIQUIDATION_START', { tabTitle: title });
-  }
 }
 
 /**
@@ -618,11 +637,6 @@ function startLiquidationCountdown() {
       // Silence harassment siren
       if (window.AudioHarassment) {
         window.AudioHarassment.stopAcousticHarassmentSiren();
-      }
-
-      // Voice Engine Final Eulogy: Tab Purged
-      if (window.VoiceEngine) {
-        window.VoiceEngine.speak('PURGE_COMPLETE');
       }
 
       // Display terminal execution badge
@@ -695,15 +709,6 @@ function handleInputEvaluation(e) {
     // ---- Incorrect Answer ----
     dom.answerInput.value = '';
     dom.answerInput.focus();
-
-    if (window.VoiceEngine) {
-      if (currentProblem.isCamouflaged) {
-        window.VoiceEngine.speak('SABOTAGE_TRIGGERED');
-      } else {
-        window.VoiceEngine.speak('PENALTY_WRONG_ANSWER');
-      }
-    }
-
     transitionTo(GameStates.PENALTY);
   }
 }
@@ -743,6 +748,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (dom.modeToggleBtn) {
     dom.modeToggleBtn.addEventListener('click', toggleTargetMode);
+  }
+
+  if (dom.openGraveyardBtn) {
+    dom.openGraveyardBtn.addEventListener('click', () => {
+      if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.create) {
+        chrome.tabs.create({ url: chrome.runtime.getURL('graveyard.html') });
+      } else if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.openOptionsPage) {
+        chrome.runtime.openOptionsPage();
+      } else {
+        window.open('graveyard.html', '_blank');
+      }
+    });
   }
 
   if (dom.answerForm) {
